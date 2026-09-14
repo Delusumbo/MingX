@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@font-face {
+  font-family: "Satoshi";
+  src: url("./assets/fonts/Satoshi-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+body {
+  font-family: "Satoshi", sans-serif;
+  background: linear-gradient(180deg, rgba(196, 50, 102, 0.9) 0%, rgba(101, 47, 123, 0.9) 100%);
+}
+
