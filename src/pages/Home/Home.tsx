@@ -64,7 +64,7 @@ const Home = () => {
 
 				{/* Desktop Button */}
 				<div className="hidden lg:block">
-					<Link to='/login' className="rounded-xl bg-black px-5 py-4 text-xl text-white">
+					<Link to="/login" className="rounded-xl bg-black px-5 py-4 text-xl text-white">
 						Get Started
 					</Link>
 				</div>
@@ -109,7 +109,7 @@ const Home = () => {
 			</header>
 
 			{/* Hero */}
-			<section className="relative min-h-screen overflow-hidden">
+			<section className="relative min-h-screen overflow-hidden lg:h-200">
 				{/* Decorative dots */}
 				<div className="hidden lg:block">
 					<div className="absolute left-[8%] top-[20%] h-5 w-5 rounded-full bg-white" />
@@ -118,14 +118,14 @@ const Home = () => {
 					<img src={Heart} alt="" className="absolute right-[8%] top-[5%]" />
 
 					{/* Abstract line */}
-					<img src={AbstractLine} alt="" className="absolute right-[8%] top-[27%] z-10" />
+					<img src={AbstractLine} alt="" className="absolute right-[8%] top-[30%] z-10" />
 
 					{/* Profile card */}
-					<img src={ProfileCard} alt="" className="absolute right-[5%] top-[57%] z-30" />
+					<img src={ProfileCard} alt="" className="absolute right-[5%] top-[66%] z-30" />
 
 					{/* Right card */}
-					<img src={MessageCard} alt="" className="absolute right-[10%] top-[22%] z-30" />
-					<img src={View} alt="" className="absolute left-[10%] top-[22%] z-30" />
+					<img src={MessageCard} alt="" className="absolute right-[10%] top-[25%] z-30" />
+					<img src={View} alt="" className="absolute left-[10%] top-[30%] z-30" />
 				</div>
 
 				{/* Heading */}
@@ -142,129 +142,147 @@ const Home = () => {
 
 				{/* Bottom purple shape */}
 				<div className="hidden lg:block">
-					<img src={Purple} alt="" className="absolute bottom-50 left-0 w-full h-60  z-0" />
+					<img src={Purple} alt="" className="absolute top-125 left-0 w-full h-60  z-0" />
 				</div>
 
 				{/* People */}
-				<img src={People} alt="" className="absolute lg:bottom-50 left-1/2 z-20 -translate-x-1/2" />
+				<img
+					src={People}
+					alt=""
+					className="absolute lg:top-85 left-1/2 z-20 w-100 -translate-x-1/2"
+				/>
 			</section>
 
 			{/* Rating section */}
-			<section className="flex flex-wrap items-center justify-center gap-25 lg:gap-60 text-white">
-				<div>
-					<h3 className="text-7xl mb-2 font-bold">4.2M</h3>
-					<p className="text-center">Active People</p>
-				</div>
-				<div>
-					<h3 className="text-7xl mb-2 font-bold">78%</h3>
-					<p className="text-center">Match till date</p>
-				</div>
-				<div>
-					<h3 className="text-7xl mb-2 font-bold">150+</h3>
-					<p className="text-center">Cities</p>
-				</div>
-				<div>
-					<h3 className="text-7xl mb-2 font-bold">
-						4.8
-						<FaStar className="text-white w-10 inline" />
-					</h3>
-					<p className="text-center">App Rating</p>
+			<section className="container mx-auto px-5 py-10">
+				<div className="grid grid-cols-1 gap-10 text-white sm:grid-cols-2 lg:grid-cols-4 lg:gap-20">
+					<div className="text-center">
+						<h3 className="mb-2 text-5xl font-bold lg:text-7xl">4.2M</h3>
+						<p>Active People</p>
+					</div>
+
+					<div className="text-center">
+						<h3 className="mb-2 text-5xl font-bold lg:text-7xl">78%</h3>
+						<p>Match till date</p>
+					</div>
+
+					<div className="text-center">
+						<h3 className="mb-2 text-5xl font-bold lg:text-7xl">150+</h3>
+						<p>Cities</p>
+					</div>
+
+					<div className="text-center">
+						<h3 className="mb-2 flex items-center justify-center gap-2 text-5xl font-bold lg:text-7xl">
+							4.8
+							<FaStar className="w-7 lg:w-10" />
+						</h3>
+						<p>App Rating</p>
+					</div>
 				</div>
 			</section>
 
 			{/* dating feels */}
-			<section className="mt-20 lg:m-30 rounded-4xl p-10 lg:p-20 bg-white">
-				<h2 className="text-5xl font-bold text-black mb-10 w-full lg:w-125">
-					Dating that feels like <span className="text-[#C43266]">a conversation</span>
-				</h2>
-				<div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 w-full">
-					<div className="bg-[#C432661A] rounded-4xl p-10">
-						<img src={Sparkles} alt="" className="" />
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black mt-3">Smart matching</h3>
-							<p className="">
-								Our vibe engine reads your interests, not just your selfies, and surfaces people
-								you'd actually text back.
-							</p>
+			<section className="container mx-auto px-10 py-10 ">
+				<div className="bg-white rounded-4xl p-10">
+					<h2 className="text-5xl font-bold text-black mb-10 w-full lg:w-125">
+						Dating that <span className="text-[#C43266]">feels</span> like a{" "}
+						<span className="text-[#C43266]">conversation</span>
+					</h2>
+					<div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 w-full">
+						<div className="bg-[#C432661A] rounded-4xl p-10">
+							<img src={Sparkles} alt="" className="" />
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black mt-3">Smart matching</h3>
+								<p className="">
+									Our vibe engine reads your interests, not just your selfies, and surfaces people
+									you'd actually text back.
+								</p>
+							</div>
 						</div>
-					</div>
-					<div className="bg-[#C432661A] rounded-4xl p-10">
-						<img src={Ice} alt="" className="" />
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black mt-3">Ice breakers tha work</h3>
-							<p className="">
-								No more 'hey'. Every match opens with a prompt built from what you both love.
-							</p>
+						<div className="bg-[#C432661A] rounded-4xl p-10">
+							<img src={Ice} alt="" className="" />
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black mt-3">Ice breakers tha work</h3>
+								<p className="">
+									No more 'hey'. Every match opens with a prompt built from what you both love.
+								</p>
+							</div>
 						</div>
-					</div>
-					<div className="bg-[#C432661A] rounded-4xl p-10">
-						<img src={Sparkles} alt="" className="" />
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black mt-3">Verified & safe</h3>
-							<p className="">
-								Photo verification, instant reporting and human moderation keep the creeps out of
-								your inbox.
-							</p>
+						<div className="bg-[#C432661A] rounded-4xl p-10">
+							<img src={Sparkles} alt="" className="" />
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black mt-3">Verified & safe</h3>
+								<p className="">
+									Photo verification, instant reporting and human moderation keep the creeps out of
+									your inbox.
+								</p>
+							</div>
 						</div>
 					</div>
 				</div>
 			</section>
 
 			{/* steps */}
-			<section className="mx-10 my-20 lg:m-30 rounded-4xl">
-				<h3 className="text-5xl font-bold text-white mb-10">Three steps to say hello</h3>
-				<div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-					<div className="bg-white rounded-4xl p-10">
-						<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
-							01
-						</p>
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black my-3">Build your vibe</h3>
-							<hr className="text-[#652F7B4D]" />
-							<p className="my-3">Six photos, three prompts, one honest bio. Two minutes, tops.</p>
-						</div>
-					</div>
-					<div className="bg-white rounded-4xl p-10">
-						<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
-							02
-						</p>
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black my-3">Meet daily pick</h3>
-							<hr className="text-[#652F7B4D]" />
-							<p className="my-3">
-								A handful of quality matches every morning, no endless swiping.
+			<section className="container mx-auto p-10">
+				<div className="rounded-4xl">
+					<h3 className="text-5xl font-bold text-white mb-10">Three steps to say hello</h3>
+					<div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+						<div className="bg-white rounded-4xl p-10">
+							<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
+								01
 							</p>
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black my-3">Build your vibe</h3>
+								<hr className="text-[#652F7B4D]" />
+								<p className="my-3">
+									Six photos, three prompts, one honest bio. Two minutes, tops.
+								</p>
+							</div>
 						</div>
-					</div>
-					<div className="bg-white rounded-4xl p-10">
-						<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
-							03
-						</p>
-						<div className="mt-5">
-							<h3 className="text-xl font-bold text-black my-3">Say hello</h3>
-							<hr className="text-[#652F7B4D]" />
-							<p className="my-3">Start with a prompt, move to a date. That's the whole idea.</p>
+						<div className="bg-white rounded-4xl p-10">
+							<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
+								02
+							</p>
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black my-3">Meet daily pick</h3>
+								<hr className="text-[#652F7B4D]" />
+								<p className="my-3">
+									A handful of quality matches every morning, no endless swiping.
+								</p>
+							</div>
+						</div>
+						<div className="bg-white rounded-4xl p-10">
+							<p className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C43266] text-white">
+								03
+							</p>
+							<div className="mt-5">
+								<h3 className="text-xl font-bold text-black my-3">Say hello</h3>
+								<hr className="text-[#652F7B4D]" />
+								<p className="my-3">Start with a prompt, move to a date. That's the whole idea.</p>
+							</div>
 						</div>
 					</div>
 				</div>
 			</section>
 
 			{/* ready to chat */}
-			<section className="lg:m-30 p-10 lg:p-20 flex flex-col items-center justify-between gap-10 lg:flex-row">
-				<div>
-					<h3 className="text-6xl font-bold text-white mb-10">Ready to chat now?</h3>
-					<p className="w-full lg:w-125 mb-10 text-white">
-						"No long back-and-forth messaging here. If we match, let’s jump straight to a quick
-						conversation, share a few laughs, and see if there's real chemistry."
-					</p>
-					<a
-						href="/login"
-						className="block rounded-xl bg-black px-5 py-4 text-center text-xl text-white w-full lg:w-60">
-						Sign Up
-					</a>
-				</div>
-				<div className="">
-					<img src={Chat} alt="" className="w-full" />
+			<section className="container mx-auto p-10">
+				<div className="flex flex-col items-center justify-between gap-10 lg:flex-row">
+					<div>
+						<h3 className="text-6xl font-bold text-white mb-10">Ready to chat now?</h3>
+						<p className="w-full lg:w-125 mb-10 text-white">
+							"No long back-and-forth messaging here. If we match, let’s jump straight to a quick
+							conversation, share a few laughs, and see if there's real chemistry."
+						</p>
+						<a
+							href="/login"
+							className="block rounded-xl bg-black px-5 py-4 text-center text-xl text-white w-full lg:w-60">
+							Sign Up
+						</a>
+					</div>
+					<div className="">
+						<img src={Chat} alt="" className="w-full" />
+					</div>
 				</div>
 			</section>
 
@@ -306,7 +324,7 @@ const Home = () => {
 								src={Aussie}
 								alt=""
 								className="
-          absolute right-0 bottom-65 lg:bottom-125 z-20
+          absolute right-0 bottom-65 lg:bottom-77.5 z-20
           w-25
         "
 							/>
@@ -316,7 +334,7 @@ const Home = () => {
 								src={Spain}
 								alt=""
 								className="
-          absolute top-65 lg:top-125 left-0 z-20
+          absolute top-65 lg:top-77.5 left-0 z-20
           w-25
         "
 							/>
@@ -366,7 +384,7 @@ const Home = () => {
 								src={Canada}
 								alt=""
 								className="
-          absolute right-0 bottom-65 lg:bottom-125 z-20
+          absolute right-0 bottom-65 lg:bottom-77.5 z-20
           w-25
         "
 							/>
@@ -376,7 +394,7 @@ const Home = () => {
 								src={Swede}
 								alt=""
 								className="
-          absolute bottom-65 lg:top-125 left-0 z-20
+          absolute bottom-65 lg:top-77.5 left-0 z-20
           w-25
         "
 							/>
@@ -426,7 +444,7 @@ const Home = () => {
 								src={USA}
 								alt=""
 								className="
-          absolute right-0 bottom-65 lg:bottom-125 z-20
+          absolute right-0 bottom-65 lg:bottom-77.5 z-20
           w-25
         "
 							/>
@@ -436,7 +454,7 @@ const Home = () => {
 								src={Mexico}
 								alt=""
 								className="
-          absolute top-65 lg:top-125 left-0 z-20
+          absolute top-65 lg:top-77.5 left-0 z-20
           w-25
         "
 							/>
@@ -630,7 +648,6 @@ const Home = () => {
 						</ul>
 					</div>
 				</div>
-				
 			</footer>
 		</div>
 	);

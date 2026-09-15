@@ -244,7 +244,6 @@ export default function Layout() {
 			<Sidebar />
 
 			<main className="min-h-screen lg:ml-61.25">
-				<Header />
 
 				<div key={location.pathname}>
 					<Outlet />
