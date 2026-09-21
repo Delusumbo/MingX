@@ -1,11 +1,51 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Banner1 from "../../assets/images/banner1.png";
 import Banner2 from "../../assets/images/banner2.png";
 import Banner3 from "../../assets/images/banner3.png";
 import Logo from "../../assets/images/Mingx.png";
+import { loginUser } from "../../auth/authService";
 
 
 const Login = () => {
+	const navigate = useNavigate();
+	const [email, setEmail] = useState("");
+	const [error, setError] = useState("");
+	const [loading, setLoading] = useState(false);
+
+	const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setError("");
+
+    if (!email.trim()) {
+        setError("Please enter your email.");
+        return;
+    }
+
+    try {
+        setLoading(true);
+
+        await loginUser(email);
+
+        navigate("/otp", {
+					replace: true,
+					state: { email },
+				});
+    } catch (error) {
+        console.error("Login error:", error);
+
+        setError(
+            error instanceof Error
+                ? error.message
+                : "Unable to login. Please try again."
+        );
+    } finally {
+        setLoading(false);
+    }
+};
+
+	
 	const slides = [
 		{
 			image: Banner1,
@@ -36,6 +76,18 @@ const Login = () => {
 		return () => clearInterval(interval);
 	}, []);
 
+	const location = useLocation();
+	
+
+	const [message, setMessage] = useState(location.state?.message || "");
+	useEffect(() => {
+		if (location.state?.message) {
+			navigate(location.pathname, {
+				replace: true,
+				state: {},
+			});
+		}
+	}, [location.state?.message, navigate, location.pathname]);
 	return (
 		<div className="relative min-h-screen overflow-hidden">
 			<img src={Logo} alt="MingX" className="absolute left-6 top-6 z-30 w-28 sm:left-10 sm:top-8" />
@@ -108,9 +160,23 @@ const Login = () => {
     lg:px-14
     xl:px-16
   ">
-				<div className="w-full max-w-137.5">
+				<div className="w-full max-w-137">
 					{/* Heading */}
-					<div className="mb-12">
+					<div className="mb-8">
+						{message && (
+							<div className="mb-5 rounded-2xl border border-[#C43266]/20 bg-[#F9E8EE] px-5 py-4">
+								<p className="font-semibold text-[#652F7B]">Account created successfully!</p>
+
+								<p className="mt-1 text-sm text-gray-600">
+									Before you login, check your email to activate your account.
+								</p>
+							</div>
+						)}
+						{error && (
+							<div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+								<p className="text-sm text-red-600">{error}</p>
+							</div>
+						)}
 						<h1
 							className="
           text-3xl font-bold
@@ -129,7 +195,7 @@ const Login = () => {
 					</div>
 
 					{/* Form */}
-					<form className="space-y-7">
+					<form onSubmit={handleLogin} className="space-y-5">
 						{/* Email */}
 						<div>
 							<label htmlFor="email" className="mb-3 block text-sm font-bold text-black">
@@ -139,80 +205,48 @@ const Login = () => {
 							<input
 								id="email"
 								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
 								placeholder="Input your email"
 								className="
-            h-12.75 w-full
-            rounded-xl
-            border border-gray-200
-            bg-white
-            px-4
-            text-sm text-gray-900
-            outline-none
-            transition
-            placeholder:text-gray-400
-            focus:border-[#C43266]
-            focus:ring-2
-            focus:ring-[#C43266]/20
-          "
+        h-10 w-full
+        rounded-xl
+        border border-gray-200
+        bg-white
+        px-4
+        text-sm text-gray-900
+        outline-none
+        transition
+        placeholder:text-gray-400
+        focus:border-[#C43266]
+        focus:ring-2
+        focus:ring-[#C43266]/20
+    "
 							/>
 						</div>
 
 						{/* Password */}
-						<div>
-							<label htmlFor="password" className="mb-3 block text-sm font-bold text-black">
-								Password
-							</label>
-
-							<input
-								id="password"
-								type="password"
-								placeholder="Input your password"
-								className="
-            h-12.75 w-full
-            rounded-xl
-            border border-gray-200
-            bg-white
-            px-4
-            text-sm text-gray-900
-            outline-none
-            transition
-            placeholder:text-gray-400
-            focus:border-[#C43266]
-            focus:ring-2
-            focus:ring-[#C43266]/20
-          "
-							/>
-
-							{/* Remember + Forgot */}
-							<div className="mt-3 flex items-center justify-between">
-								<label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
-									<input id="remember" type="checkbox" className="h-5 w-5 accent-[#C43266]" />
-									Remember Me
-								</label>
-
-								<a href="#" className="text-sm text-gray-700 transition hover:text-[#C43266]">
-									Forget Password?
-								</a>
-							</div>
-						</div>
 
 						{/* Login */}
 						<button
 							type="submit"
+							disabled={loading}
 							className="
-          h-12.75 w-full
-          rounded-xl
-          bg-linear-to-r
-          from-[#C43266]
-          to-[#652F7B]
-          font-medium
-          text-white
-          transition-all
-          duration-300
-          hover:opacity-90
-          hover:shadow-lg
-        ">
-							Login
+        h-10 w-full
+        rounded-xl
+        bg-linear-to-r
+        from-[#C43266]
+        to-[#652F7B]
+        font-medium
+        text-white
+        transition-all
+        duration-300
+        hover:opacity-90
+        hover:shadow-lg
+        disabled:cursor-not-allowed
+        disabled:opacity-60
+    ">
+							{loading ? "Logging in..." : "Login"}
 						</button>
 
 						{/* Divider */}
@@ -228,7 +262,7 @@ const Login = () => {
 						<button
 							type="button"
 							className="
-          flex h-12.5 w-full
+          flex h-10 w-full
           items-center justify-center
           gap-3
           rounded-xl
@@ -245,7 +279,7 @@ const Login = () => {
 					</form>
 
 					{/* Sign up */}
-					<p className="mt-8 text-center text-sm text-gray-700">
+					<p className="mt-4 text-center text-sm text-gray-700">
 						Don’t have an account?{" "}
 						<a href="/register" className="font-medium text-[#C43266] hover:text-[#652F7B]">
 							Sign Up here

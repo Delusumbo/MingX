@@ -15,6 +15,20 @@ import {
 import { Header } from "../../components/Layout";
 import joseph from "../../assets/images/joseph.png";
 
+
+const storedUser = localStorage.getItem("user");
+
+const user = storedUser ? JSON.parse(storedUser) : null;
+
+let interests = "Not provided";
+
+try {
+	const parsed = JSON.parse(user?.yourinterest || "[]");
+	interests = parsed.join(", ");
+} catch {
+	interests = user?.yourinterest || "Not provided";
+}
+
 type ProfileInfo = {
 	label: string;
 	value: string;
@@ -24,82 +38,82 @@ type ProfileInfo = {
 const information: ProfileInfo[] = [
 	{
 		label: "Gender",
-		value: "Male",
+		value: user?.gender || "Not provided",
 		icon: CircleUserRound,
 	},
 	{
 		label: "Date of Birth",
-		value: "20/08/1996",
+		value: user?.dob || "Not provided",
 		icon: CalendarDays,
 	},
 	{
 		label: "Looking For",
-		value: "Woman",
+		value: user?.lookingfor || "Not provided",
 		icon: CircleUserRound,
 	},
 	{
 		label: "Goal",
-		value: "Casual Fun",
+		value: user?.goal || "Not provided",
 		icon: Crosshair,
 	},
 	{
 		label: "Interest",
-		value: "Travel & Art",
+		value: interests || "Not provided",
 		icon: Star,
 	},
 	{
 		label: "Height",
-		value: "5’6’",
+		value: user?.height || "Not provided",
 		icon: Ruler,
 	},
 	{
 		label: "Weight",
-		value: "150lbs",
+		value: user?.weight || "Not provided",
 		icon: Ruler,
 	},
 	{
 		label: "Belief",
-		value: "Christianity",
+		value: user?.belief || "Not provided",
 		icon: Heart,
 	},
 	{
 		label: "Sexual Orientation",
-		value: "Others",
+		value: user?.sexual_orientation || "Not provided",
 		icon: UsersRound,
 	},
 	{
 		label: "Zodiac",
-		value: "Virgo",
+		value: user?.zodiac_sign || "Not provided",
 		icon: Star,
 	},
 	{
 		label: "Education",
-		value: "Tech Degree",
+		value: user?.education_level || "Not provided",
 		icon: GraduationCap,
 	},
 	{
 		label: "Drink",
-		value: "No, Never",
+		value: user?.doyoudrink || "Not provided",
 		icon: Wine,
 	},
 	{
 		label: "Smoke",
-		value: "No, Never",
+		value: user?.doyousmoke || "Not provided",
 		icon: Cigarette,
 	},
 	{
 		label: "Marital Status",
-		value: "Single",
+		value: user?.maritalstatus || "Not provided",
 		icon: Heart,
 	},
 	{
 		label: "Kids",
-		value: "Not Yet",
+		value: user?.doyouhavekids || "Not provided",
 		icon: UsersRound,
 	},
 	{
 		label: "Location",
-		value: "Los Angeles, USA",
+		value: [user?.state, user?.country].filter(Boolean).join(", ") || "Not provided",
 		icon: MapPin,
 	},
 ];
@@ -123,7 +137,7 @@ export default function Profile() {
 				<div className="flex flex-col items-center py-8">
 					<div className="relative">
 						<img
-							src={joseph}
+							src={user?.profilepicture}
 							className="h-36 w-36 rounded-full border-4 border-[#ca2e6b] object-cover p-1"
 						/>
 
@@ -132,10 +146,10 @@ export default function Profile() {
 						</span>
 					</div>
 
-					<h2 className="mt-4 text-lg font-semibold">Joseph McGuire</h2>
+					<h2 className="mt-4 text-lg font-semibold">{ user?.name}</h2>
 
 					<span className="mt-2 rounded-full bg-[#ca2e6b] px-5 py-2 text-xs text-white">
-						⚑ Casual fun
+						⚑ {user?.goal}
 					</span>
 				</div>
 

@@ -8,6 +8,7 @@ import peter from "../../assets/images/peter.png";
 import margret from "../../assets/images/margret.png";
 import cynthia from "../../assets/images/cynthia.png";
 import type { Person } from "../../types";
+import FilterPanel from "../../components/FilterPanel";
 
 const people: Person[] = [
 	{
@@ -68,6 +69,12 @@ export default function Connections() {
 	const [tab, setTab] = useState("All");
 
 	const tabs = ["All", "You like", "Like you", "Match"];
+	const [filtersOpen, setFiltersOpen] = useState(false);
+	
+		const handleFilters = (filters: Record<string, unknown>) => {
+			console.log("Applied filters:", filters);
+		};
+			
 
 	return (
 		<>
@@ -97,7 +104,7 @@ export default function Connections() {
 							))}
 						</div>
 
-						<FilterButton />
+						<FilterButton onClick={() => setFiltersOpen(true)} />
 					</div>
 				</div>
 
@@ -106,6 +113,12 @@ export default function Connections() {
 						<PersonCard key={person.id} person={person} />
 					))}
 				</div>
+
+				<FilterPanel
+					isOpen={filtersOpen}
+					onClose={() => setFiltersOpen(false)}
+					onApply={handleFilters}
+				/>
 			</section>
 		</>
 	);

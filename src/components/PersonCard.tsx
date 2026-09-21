@@ -1,4 +1,5 @@
-import { Heart, MapPin, MessageCircle, MoreHorizontal, X } from "lucide-react";
+import { Heart, MapPin, MessageCircle, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import type { Person } from "../types";
 
@@ -16,9 +17,7 @@ export default function PersonCard({ person, showActions = true }: PersonCardPro
 		console.log(`Passed ${person.name}`);
 	};
 
-	const handleMessage = () => {
-		console.log(`Message ${person.name}`);
-	};
+	
 
 	return (
 		<article className="group overflow-hidden rounded-[26px] bg-white shadow-[0_8px_25px_rgba(20,10,20,.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(20,10,20,.12)]">
@@ -42,12 +41,6 @@ export default function PersonCard({ person, showActions = true }: PersonCardPro
 					Online
 				</span>
 
-				{/* More */}
-
-				<button className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-gray-600 backdrop-blur transition hover:bg-white">
-					<MoreHorizontal size={19} />
-				</button>
-
 				{/* Name over image */}
 
 				<div className="absolute bottom-5 left-5 right-5 text-white">
@@ -70,18 +63,18 @@ export default function PersonCard({ person, showActions = true }: PersonCardPro
 			<div className="p-5">
 				{/* Intent */}
 
-				<div className="mb-5 flex items-center justify-between">
-					<div>
+				<div className="mb-5 flex items-center justify-center">
+					<div className="flex justify-center items-center gap-10">
 						<p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
 							Looking for
 						</p>
 
-						<span className="mt-1 inline-block rounded-full bg-[#f9e8ef] px-4 py-1.5 text-xs font-medium text-[#ca2e6b]">
+						<span className="inline-block rounded-full bg-[#f9e8ef] px-4 py-1.5 text-xs font-medium text-[#ca2e6b]">
 							{person.intent}
 						</span>
 					</div>
 
-					{person.region && <span className="text-xs text-gray-400">{person.region}</span>}
+					{person.state && <span className="text-xs text-gray-400">{person.state}</span>}
 				</div>
 
 				{/* Actions */}
@@ -99,15 +92,14 @@ export default function PersonCard({ person, showActions = true }: PersonCardPro
 
 						{/* Message */}
 
-						<button
-							onClick={handleMessage}
+						<Link
+							to={`/message?receiver_id=${person.id}`}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
 							Message
-						</button>
+						</Link>
 
 						{/* Like */}
-						
 
 						<button
 							onClick={handleLike}
@@ -122,12 +114,12 @@ export default function PersonCard({ person, showActions = true }: PersonCardPro
 
 				{!showActions && (
 					<div className="flex items-center gap-3">
-						<button
-							onClick={handleMessage}
+						<Link
+							to={`/message?receiver_id=${person.id}`}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] py-3 text-sm font-medium text-white">
 							<MessageCircle size={17} />
 							Message
-						</button>
+						</Link>
 
 						<button
 							onClick={handleLike}

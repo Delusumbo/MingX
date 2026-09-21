@@ -5,8 +5,4 @@ export type Person = {
 	image: string;
 	location: string;
 	intent: string;
-	match?: boolean;
-	likedYou?: boolean;
-	region?: string;
 };
-

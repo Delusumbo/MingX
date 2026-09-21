@@ -31,7 +31,7 @@ import { IoIosMail } from "react-icons/io";
 
 
 const Home = () => {
-	const [menuOpen, setMenuOpen] = useState(false);
+	
 
 	return (
 		<div className="min-h-screen">
@@ -42,70 +42,15 @@ const Home = () => {
 				</div>
 
 				{/* Desktop Navigation */}
-				<nav className="hidden lg:block">
-					<ul className="flex items-center">
-						<li className="px-4 py-2 text-xl text-[#C43266] hover:text-black">
-							<a href="/">Features</a>
-						</li>
-
-						<li className="px-4 py-2 text-xl text-[#C43266] hover:text-black">
-							<a href="/about">Stories</a>
-						</li>
-
-						<li className="px-4 py-2 text-xl text-[#C43266] hover:text-black">
-							<a href="/contact">Premium</a>
-						</li>
-
-						<li className="px-4 py-2 text-xl text-[#C43266] hover:text-black">
-							<a href="/contact">App</a>
-						</li>
-					</ul>
-				</nav>
 
 				{/* Desktop Button */}
-				<div className="hidden lg:block">
-					<Link to="/login" className="rounded-xl bg-black px-5 py-4 text-xl text-white">
+				<div>
+					<Link
+						to="/login"
+						className="rounded-xl bg-black px-5 py-4 text-xl text-white hover:bg-[#ED2882]">
 						Get Started
 					</Link>
 				</div>
-
-				{/* Mobile Menu Button */}
-				<button
-					onClick={() => setMenuOpen(!menuOpen)}
-					className="rounded-lg bg-black px-4 py-2 text-white lg:hidden">
-					{menuOpen ? "Close" : "Menu"}
-				</button>
-
-				{/* Mobile Menu */}
-				{menuOpen && (
-					<div className="absolute left-0 top-full z-50 w-full bg-white px-5 py-5 shadow-lg lg:hidden">
-						<ul className="flex flex-col">
-							<li className="border-b py-3 text-lg text-[#C43266]">
-								<a href="/">Features</a>
-							</li>
-
-							<li className="border-b py-3 text-lg text-[#C43266]">
-								<a href="/about">Stories</a>
-							</li>
-
-							<li className="border-b py-3 text-lg text-[#C43266]">
-								<a href="/contact">Premium</a>
-							</li>
-
-							<li className="border-b py-3 text-lg text-[#C43266]">
-								<a href="/contact">App</a>
-							</li>
-
-							<li className="pt-4">
-								<a
-									href="/login"
-									className="block rounded-xl bg-black px-5 py-3 text-center text-white">
-									Get Started
-								</a>
-							</li>
-						</ul>
-					</div>
-				)}
 			</header>
 
 			{/* Hero */}
@@ -132,11 +77,12 @@ const Home = () => {
 				<div className="relative z-10 px-5 pt-16 text-center">
 					<h1 className="text-5xl font-bold text-white lg:text-6xl">
 						Meet the <br />
-						Chosen ones
+						right people
 					</h1>
 
 					<p className="mx-auto mt-5 max-w-xs text-sm text-white/90">
-						Real conversations, verified people, and matches worth showing up for.
+						Real conversations, verified people, and meaningful connections built around what
+						matters to you.{" "}
 					</p>
 				</div>
 
@@ -158,12 +104,12 @@ const Home = () => {
 				<div className="grid grid-cols-1 gap-10 text-white sm:grid-cols-2 lg:grid-cols-4 lg:gap-20">
 					<div className="text-center">
 						<h3 className="mb-2 text-5xl font-bold lg:text-7xl">4.2M</h3>
-						<p>Active People</p>
+						<p>Active Members</p>
 					</div>
 
 					<div className="text-center">
 						<h3 className="mb-2 text-5xl font-bold lg:text-7xl">78%</h3>
-						<p>Match till date</p>
+						<p>Connections made</p>
 					</div>
 
 					<div className="text-center">
@@ -185,26 +131,29 @@ const Home = () => {
 			<section className="container mx-auto px-10 py-10 ">
 				<div className="bg-white rounded-4xl p-10">
 					<h2 className="text-5xl font-bold text-black mb-10 w-full lg:w-125">
-						Dating that <span className="text-[#C43266]">feels</span> like a{" "}
+						Connecting people that <span className="text-[#C43266]">feels</span> like a{" "}
 						<span className="text-[#C43266]">conversation</span>
 					</h2>
 					<div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 w-full">
 						<div className="bg-[#C432661A] rounded-4xl p-10">
 							<img src={Sparkles} alt="" className="" />
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black mt-3">Smart matching</h3>
-								<p className="">
-									Our vibe engine reads your interests, not just your selfies, and surfaces people
-									you'd actually text back.
+								<h3 className="text-xl font-bold text-black mt-3">Smart connection</h3>
+								<p>
+									{" "}
+									Our discovery engine considers your interests, values, and communities to help you
+									discover people you genuinely connect with.{" "}
 								</p>
 							</div>
 						</div>
 						<div className="bg-[#C432661A] rounded-4xl p-10">
 							<img src={Ice} alt="" className="" />
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black mt-3">Ice breakers tha work</h3>
-								<p className="">
-									No more 'hey'. Every match opens with a prompt built from what you both love.
+								<h3 className="text-xl font-bold text-black mt-3">Conversation starter</h3>
+								<p>
+									{" "}
+									Break the ice with thoughtful prompts based on shared interests, experiences, and
+									things you both care about.{" "}
 								</p>
 							</div>
 						</div>
@@ -212,9 +161,10 @@ const Home = () => {
 							<img src={Sparkles} alt="" className="" />
 							<div className="mt-5">
 								<h3 className="text-xl font-bold text-black mt-3">Verified & safe</h3>
-								<p className="">
-									Photo verification, instant reporting and human moderation keep the creeps out of
-									your inbox.
+								<p>
+									{" "}
+									Profile verification, reporting tools, and human moderation help create a trusted
+									environment for everyone.{" "}
 								</p>
 							</div>
 						</div>
@@ -232,10 +182,10 @@ const Home = () => {
 								01
 							</p>
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black my-3">Build your vibe</h3>
+								<h3 className="text-xl font-bold text-black my-3">Build your profile</h3>
 								<hr className="text-[#652F7B4D]" />
 								<p className="my-3">
-									Six photos, three prompts, one honest bio. Two minutes, tops.
+									Add your photos, interests, communities, and a little about what makes you unique.
 								</p>
 							</div>
 						</div>
@@ -244,10 +194,11 @@ const Home = () => {
 								02
 							</p>
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black my-3">Meet daily pick</h3>
+								<h3 className="text-xl font-bold text-black my-3">Discover people</h3>
 								<hr className="text-[#652F7B4D]" />
 								<p className="my-3">
-									A handful of quality matches every morning, no endless swiping.
+									Explore people, communities, and conversations that align with your interests and
+									values.
 								</p>
 							</div>
 						</div>
@@ -256,9 +207,12 @@ const Home = () => {
 								03
 							</p>
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black my-3">Say hello</h3>
+								<h3 className="text-xl font-bold text-black my-3">Start a conersation</h3>
 								<hr className="text-[#652F7B4D]" />
-								<p className="my-3">Start with a prompt, move to a date. That's the whole idea.</p>
+								<p className="my-3">
+									Connect, exchange ideas, and build meaningful relationships through genuine
+									conversations.
+								</p>
 							</div>
 						</div>
 					</div>
@@ -269,16 +223,16 @@ const Home = () => {
 			<section className="container mx-auto p-10">
 				<div className="flex flex-col items-center justify-between gap-10 lg:flex-row">
 					<div>
-						<h3 className="text-6xl font-bold text-white mb-10">Ready to chat now?</h3>
+						<h3 className="text-6xl font-bold text-white mb-10">Ready to connect?</h3>
 						<p className="w-full lg:w-125 mb-10 text-white">
-							"No long back-and-forth messaging here. If we match, let’s jump straight to a quick
-							conversation, share a few laughs, and see if there's real chemistry."
+							"Skip the small talk and discover conversations with people who share your interests,
+							experiences, and perspective."
 						</p>
-						<a
-							href="/login"
-							className="block rounded-xl bg-black px-5 py-4 text-center text-xl text-white w-full lg:w-60">
+						<Link
+							to="/login"
+							className="block rounded-xl bg-black px-5 py-4 text-center text-xl text-white w-full lg:w-60 hover:bg-[#ED2882]">
 							Sign Up
-						</a>
+						</Link>
 					</div>
 					<div className="">
 						<img src={Chat} alt="" className="w-full" />
@@ -288,7 +242,9 @@ const Home = () => {
 
 			{/* forever */}
 			<section className="mx-10 my-20 lg:m-30">
-				<h3 className="text-5xl mb-20 font-bold text-white text-center">From mingX to forever</h3>
+				<h3 className="text-5xl mb-20 font-bold text-white text-center">
+					Real people. Real connections.
+				</h3>
 				<div className="grid w-full grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
 					{/* Card */}
 					<div className="group">
@@ -343,9 +299,9 @@ const Home = () => {
 						{/* Testimonial */}
 						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
 							<p className="text-base leading-6">
-								"Our first chat felt natural because we already shared the same core values and
-								cultural background. One quick message turned into hours of talking, and now we’re
-								planning our future together"
+								"Our first conversation felt natural because we already shared the same core values
+								and cultural background. MingX made it easy to discover someone who understood where
+								I was coming from"
 							</p>
 
 							<p className="mt-8 font-bold">David & Anita</p>
@@ -403,9 +359,8 @@ const Home = () => {
 						{/* Testimonial */}
 						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
 							<p className="text-base leading-6">
-								"I almost gave up on dating apps until I tried MingX. The app made it so easy to
-								skip the superficial small talk and jump right into real conversations.We matched on
-								a Tuesday, met for coffee that weekend."
+								"I almost gave up on social platforms until I found MingX. It made it easy to move
+								beyond superficial conversations and connect around things that actually matter."
 							</p>
 
 							<p className="mt-8 font-bold">Katherine & Moses</p>
@@ -418,54 +373,33 @@ const Home = () => {
 							<img
 								src={Forever3}
 								alt=""
-								className="
-          relative z-0
-          block h-full w-full object-cover
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-0
-        "
+								className="relative z-0 block h-full w-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
 							/>
 
 							{/* Hover image */}
 							<img
 								src={Variant3}
 								alt=""
-								className="
-          absolute inset-0 z-0
-          h-full w-full object-cover
-          opacity-0
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-100
-        "
+								className="absolute inset-0 z-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100"
 							/>
 
 							{/* Australia flag - top right */}
 							<img
 								src={USA}
 								alt=""
-								className="
-          absolute right-0 bottom-65 lg:bottom-77.5 z-20
-          w-25
-        "
+								className="absolute right-0 bottom-65 lg:bottom-77.5 z-20 w-25"
 							/>
 
 							{/* Spain flag - bottom left */}
-							<img
-								src={Mexico}
-								alt=""
-								className="
-          absolute top-65 lg:top-77.5 left-0 z-20
-          w-25
-        "
-							/>
+							<img src={Mexico} alt="" className="absolute top-65 lg:top-77.5 left-0 z-20 w-25" />
 						</div>
 
 						{/* Testimonial */}
 						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
 							<p className="text-base leading-6">
-								"Living in the diaspora, finding someone who genuinely understood my background and
-								vision for a relationship felt impossible,From our very first chat, the connection
-								was effortless. Two years later, we're engaged!"
+								"Living in the diaspora, finding people who genuinely understood my background and
+								perspective was difficult. MingX helped me discover a community where conversations
+								felt effortless."
 							</p>
 
 							<p className="mt-8 font-bold">Annabel & Jerome</p>
@@ -485,16 +419,16 @@ const Home = () => {
 							Download the <span className="text-[#C43266]">MingX</span> App
 						</h3>
 						<p className="text-white lg:w-90 mb-10 lg:mb-20">
-							Don’t let your busy schedule stand in the way of love. Download MingX today and start
-							connecting with people who truly understand
+							Stay connected wherever you go. Discover new people, join communities, and have
+							meaningful conversations from anywhere
 						</p>
 						<div className="flex flex-col gap-5 md:flex-row">
-							<a href="#">
+							<Link to="#">
 								<img src={Apple} alt="App Store" className="" />
-							</a>
-							<a href="#">
+							</Link>
+							<Link to="#">
 								<img src={Google} alt="Google Play" className="" />
-							</a>
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -504,11 +438,11 @@ const Home = () => {
 			<section className="mx-4 rounded-t-3xl bg-white px-6 py-12 sm:mx-6 sm:px-10 lg:mx-30 lg:px-20 lg:py-16">
 				<div className="mx-auto max-w-4xl text-center">
 					<h3 className="mb-5 text-3xl font-bold leading-tight text-black sm:text-4xl lg:text-5xl">
-						Your match is one <span className="text-[#C43266]">Hello</span> away
+						Your next connection is one <span className="text-[#C43266]">Hello</span> away
 					</h3>
 
 					<p className="mb-8 text-sm text-gray-600 sm:text-base">
-						Join free today. No swiping marathons, no bots, no games.
+						Join MingX today and discover people, communities, and conversations that matter to you.
 					</p>
 
 					<form className="mx-auto flex flex-col gap-3 sm:flex-row">
@@ -547,7 +481,10 @@ const Home = () => {
           focus:ring-2
           focus:ring-[#C43266]
           focus:ring-offset-2
-          sm:w-auto
+          sm:w-auto hover:bg-linear-to-r
+          from-[#C43266]
+          to-[#652F7B]
+
         ">
 							Join for free
 						</button>
@@ -563,8 +500,8 @@ const Home = () => {
 						<img src={Logo} alt="MingX" className="w-28" />
 
 						<p className="mt-6 max-w-sm text-sm leading-6 text-gray-600">
-							Redefining modern dating through authentic, real-time conversations. Skip the
-							ghosting, find your match, and connect when it actually matters.
+							MingX is a modern platform for discovering people, building communities, and having
+							authentic conversations around the things that matter to you.
 						</p>
 					</div>
 
@@ -574,27 +511,27 @@ const Home = () => {
 
 						<ul className="space-y-3">
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Terms of Service
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Privacy Policy
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Cookie Policy
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Community Guidelines
-								</a>
+								</Link>
 							</li>
 						</ul>
 					</div>
@@ -605,27 +542,27 @@ const Home = () => {
 
 						<ul className="space-y-3">
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Instagram
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Twitter
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Facebook
-								</a>
+								</Link>
 							</li>
 
 							<li>
-								<a href="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									LinkedIn
-								</a>
+								</Link>
 							</li>
 						</ul>
 					</div>
@@ -636,14 +573,14 @@ const Home = () => {
 
 						<ul>
 							<li>
-								<a
-									href="mailto:info@mingx.com"
+								<Link
+									to="mailto:info@mingx.com"
 									className="flex items-center gap-3 text-sm text-gray-600 transition hover:text-[#C43266]">
 									<span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#C43266] text-white">
 										<IoIosMail />
 									</span>
 									info@mingx.com
-								</a>
+								</Link>
 							</li>
 						</ul>
 					</div>

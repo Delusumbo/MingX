@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@iconify-json/emojione-monotone": "^1.2.1",
+    "@iconify/react": "^6.0.2",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.20.0",
     "lucide-react": "^1.43.0",

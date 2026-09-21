@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
+import { registerUser } from "../../auth/authService";
 
 type FormData = {
 	name: string;
+	phone: string;
 	dateOfBirth: string;
 	gender: string;
 	location: string;
@@ -18,16 +21,23 @@ type FormData = {
 	bio: string;
 	drinking: string;
 	smoking: string;
-	photos: File[];
+	email: string;
+	state: string;
+	country: string;
 	height: string;
 	weight: string;
+	photos: File[];
+	profilePicture: File | null;
 };
 
 const Register = () => {
+	 const navigate = useNavigate();
 	const [step, setStep] = useState(1);
+	const [error, setError] = useState("");
 
-	const [formData, setFormData] = useState<FormData>({
+	const [formData, setFormData] = useState({
 		name: "",
+		phone: "",
 		dateOfBirth: "",
 		gender: "",
 		location: "",
@@ -35,7 +45,7 @@ const Register = () => {
 		goal: "",
 		belief: "",
 		sexualOrientation: "",
-		interests: [],
+		interests: [] as string[],
 		zodiac: "",
 		education: "",
 		maritalStatus: "",
@@ -43,12 +53,19 @@ const Register = () => {
 		bio: "",
 		drinking: "",
 		smoking: "",
-		photos: [],
+
+		email: "",
+		state: "",
+		country: "",
+
 		height: "",
 		weight: "",
+
+		photos: [] as File[],
+		profilePicture: null as File | null,
 	});
 
-	const totalSteps = 20;
+	const totalSteps = 21;
 
 	// --------------------------------
 	// UPDATE FORM DATA
@@ -78,14 +95,27 @@ const Register = () => {
 	// PHOTO UPLOAD
 	// --------------------------------
 
-	const handlePhotos = (files: FileList | null) => {
-		if (!files) return;
+	const photoPreviews = useMemo(() => {
+		return formData.photos.map((file) => ({
+			file,
+			url: URL.createObjectURL(file),
+		}));
+	}, [formData.photos]);
 
-		const newPhotos = Array.from(files);
+	useEffect(() => {
+		return () => {
+			photoPreviews.forEach((photo) => {
+				URL.revokeObjectURL(photo.url);
+			});
+		};
+	}, [photoPreviews]);
+
+	const handlePhotos = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const files = Array.from(event.target.files || []);
 
 		setFormData((prev) => ({
 			...prev,
-			photos: [...prev.photos, ...newPhotos],
+			photos: [...prev.photos, ...files],
 		}));
 	};
 
@@ -94,13 +124,12 @@ const Register = () => {
 	// --------------------------------
 
 	const handleNext = () => {
-		if (step < totalSteps) {
-			setStep((prev) => prev + 1);
-		} else {
-			console.log("Registration completed:", formData);
-
-			// Submit your registration here
+		if (step === totalSteps) {
+			handleSubmit();
+			return;
 		}
+
+		setStep((prev) => prev + 1);
 	};
 
 	// --------------------------------
@@ -152,18 +181,18 @@ const Register = () => {
 	const orientationOptions = ["Straight", "Gay", "Lesbian", "Bisexual", "Asexual", "Other"];
 
 	const interests = [
-		"Travel",
-		"Music",
-		"Movies",
-		"Reading",
-		"Fitness",
-		"Cooking",
 		"Photography",
-		"Gaming",
+		"Cooking",
+		"Video Games",
+		"Music",
+		"Shopping",
+		"Travelling",
+		"Reading",
 		"Art",
+		"Movies",
+		"Fitness",
 		"Sports",
 		"Dancing",
-		"Fashion",
 	];
 
 	const zodiacOptions = [
@@ -236,6 +265,67 @@ const Register = () => {
 	// STEP CONTENT
 	// --------------------------------
 
+	const handleSubmit = async () => {
+		try {
+			const form = new FormData();
+
+			form.append("name", formData.name);
+			form.append("phone", formData.phone);
+			form.append("dob", formData.dateOfBirth);
+			form.append("gender", formData.gender);
+			form.append("lookingfor", formData.lookingFor);
+			form.append("goal", formData.goal);
+
+			form.append("yourinterest", JSON.stringify(formData.interests));
+
+			form.append("height", formData.height);
+			form.append("weight", formData.weight);
+			form.append("belief", formData.belief);
+			form.append("sexual_orientation", formData.sexualOrientation);
+			form.append("zodiac_sign", formData.zodiac);
+			form.append("education_level", formData.education);
+			form.append("doyoudrink", formData.drinking);
+			form.append("doyousmoke", formData.smoking);
+			form.append("maritalstatus", formData.maritalStatus);
+			form.append("doyouhavekids", formData.kids);
+			form.append("bio", formData.bio);
+			form.append("email", formData.email);
+			form.append("state", formData.state);
+			form.append("country", formData.country);
+
+			formData.photos.forEach((photo) => {
+				form.append("images[]", photo);
+			});
+
+			if (formData.profilePicture) {
+				form.append("profilepicture", formData.profilePicture);
+			}
+
+			await registerUser(form);
+
+			navigate("/login", {
+				state: {
+					message: "Account created successfully. Check your email to activate your account.",
+				},
+			});
+		} catch (error) {
+			console.error("Registration error:", error);
+
+			setError(error instanceof Error ? error.message : "Something went wrong");
+		}
+	};
+
+	const handleProfilePicture = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+
+		if (!file) return;
+
+		setFormData((prev) => ({
+			...prev,
+			profilePicture: file,
+		}));
+	};
+
 	const renderStep = () => {
 		switch (step) {
 			// ============================
@@ -258,12 +348,33 @@ const Register = () => {
 						/>
 					</>
 				);
+			
+			
+			// ============================
+			// 1. NAME
+			// ============================
+
+			case 2:
+				return (
+					<>						
+
+						<h1 className="mt-5 text-2xl font-bold text-black sm:text-3xl">Email</h1>
+
+						<input
+							type="email"
+							value={formData.email}
+							onChange={(e) => updateField("email", e.target.value)}
+							placeholder="Enter your Email"
+							className="mt-8 h-12.5 w-full max-w-90 rounded-xl border-none bg-[#F9E8EE] px-5 text-center outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#C43266]/30"
+						/>
+					</>
+				);
 
 			// ============================
 			// 2. DATE OF BIRTH
 			// ============================
 
-			case 2:
+			case 3:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Enter your date of birth?</h1>
@@ -283,7 +394,7 @@ const Register = () => {
 			// 3. GENDER
 			// ============================
 
-			case 3:
+			case 4:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Tell us your gender?</h1>
@@ -309,7 +420,7 @@ const Register = () => {
 			// 4. LOOKING FOR
 			// ============================
 
-			case 4:
+			case 5:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Who are you looking for?</h1>
@@ -335,7 +446,7 @@ const Register = () => {
 			// 5. GOAL
 			// ============================
 
-			case 5:
+			case 6:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your goal?</h1>
@@ -362,7 +473,7 @@ const Register = () => {
 			// 6. INTERESTS
 			// ============================
 
-			case 6:
+			case 7:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your interest?</h1>
@@ -389,7 +500,7 @@ const Register = () => {
 			// 7. HEIGHT
 			// ============================
 
-			case 7:
+			case 8:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Height?</h1>
@@ -408,7 +519,7 @@ const Register = () => {
 			// 8. WEIGHT
 			// ============================
 
-			case 8:
+			case 9:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Weight?</h1>
@@ -427,7 +538,7 @@ const Register = () => {
 			// 9. BELIEF
 			// ============================
 
-			case 9:
+			case 10:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Belief?</h1>
@@ -453,7 +564,7 @@ const Register = () => {
 			// 10. ORIENTATION
 			// ============================
 
-			case 10:
+			case 11:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -481,7 +592,7 @@ const Register = () => {
 			// 11. ZODIAC
 			// ============================
 
-			case 11:
+			case 12:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Zodiac sign?</h1>
@@ -507,7 +618,7 @@ const Register = () => {
 			// 12. EDUCATION
 			// ============================
 
-			case 12:
+			case 13:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -533,7 +644,7 @@ const Register = () => {
 			// 13. DRINKING
 			// ============================
 
-			case 13:
+			case 14:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you drink?</h1>
@@ -559,7 +670,7 @@ const Register = () => {
 			// 14. SMOKING
 			// ============================
 
-			case 14:
+			case 15:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you smoke?</h1>
@@ -585,7 +696,7 @@ const Register = () => {
 			// 17. ADD PHOTO
 			// ============================
 
-			case 15:
+			case 16:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Add a Photo</h1>
@@ -595,20 +706,36 @@ const Register = () => {
 							personality.
 						</p>
 
-						<label className="mt-8 flex h-28 w-28 cursor-pointer flex-col items-center justify-center rounded-xl bg-[#F9E8EE] text-sm text-[#C43266]">
-							<span className="text-2xl">📷</span>
-							<span className="mt-1">Upload</span>
+						<div className="mt-8 flex flex-wrap justify-center gap-4">
+							{/* Show uploaded image */}
+							{photoPreviews.length > 0 ? (
+								<div className="relative">
+									<img
+										src={photoPreviews[0].url}
+										alt="Profile preview"
+										className="h-40 w-40 rounded-2xl object-cover shadow-md"
+									/>
 
-							<input
-								type="file"
-								accept="image/*"
-								className="hidden"
-								onChange={(e) => handlePhotos(e.target.files)}
-							/>
-						</label>
+									<span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-[#C43266]">
+										✓ Photo
+									</span>
+								</div>
+							) : (
+								<label className="flex h-40 w-40 cursor-pointer flex-col items-center justify-center rounded-2xl bg-[#F9E8EE] text-sm text-[#C43266] transition hover:bg-[#f5dce5]">
+									<span className="text-3xl">📷</span>
+									<span className="mt-2">Upload</span>
 
-						{formData.photos.length > 0 && (
-							<p className="mt-4 text-sm text-[#C43266]">Photo selected ✓</p>
+									<input type="file" accept="image/*" onChange={handleProfilePicture} />
+								</label>
+							)}
+						</div>
+
+						{/* Upload another / change photo */}
+						{photoPreviews.length > 0 && (
+							<label className="mt-4 cursor-pointer rounded-xl border border-[#C43266] px-5 py-2.5 text-sm text-[#C43266] transition hover:bg-[#F9E8EE]">
+								Change photo
+								<input type="file" accept="image/*" className="hidden" onChange={handlePhotos} />
+							</label>
 						)}
 					</>
 				);
@@ -617,7 +744,7 @@ const Register = () => {
 			// 16. MORE PHOTOS
 			// ============================
 
-			case 16:
+			case 17:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Add more photos</h1>
@@ -627,20 +754,43 @@ const Register = () => {
 							different aspects of your life and personality.
 						</p>
 
-						<label className="mt-8 flex cursor-pointer items-center justify-center rounded-xl bg-[#F9E8EE] px-8 py-5 text-sm text-[#C43266]">
+						{/* Uploaded photos */}
+						{photoPreviews.length > 0 && (
+							<div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+								{photoPreviews.map((photo, index) => (
+									<div
+										key={`${photo.file.name}-${index}`}
+										className="relative overflow-hidden rounded-2xl">
+										<img
+											src={photo.url}
+											alt={`Uploaded photo ${index + 1}`}
+											className="h-32 w-32 object-cover sm:h-36 sm:w-36"
+										/>
+
+										<span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white">
+											Photo {index + 1}
+										</span>
+									</div>
+								))}
+							</div>
+						)}
+
+						{/* Add more photos */}
+						<label className="mt-6 flex cursor-pointer items-center justify-center rounded-xl bg-[#F9E8EE] px-8 py-5 text-sm text-[#C43266] transition hover:bg-[#f5dce5]">
 							+ Add photos
 							<input
 								type="file"
 								accept="image/*"
 								multiple
 								className="hidden"
-								onChange={(e) => handlePhotos(e.target.files)}
+								onChange={handlePhotos}
 							/>
 						</label>
 
-						{formData.photos.length > 0 && (
-							<p className="mt-4 text-sm text-[#C43266]">
-								{formData.photos.length} photo(s) selected ✓
+						{photoPreviews.length > 0 && (
+							<p className="mt-3 text-sm text-gray-500">
+								{photoPreviews.length} photo
+								{photoPreviews.length !== 1 ? "s" : ""} selected
 							</p>
 						)}
 					</>
@@ -650,7 +800,7 @@ const Register = () => {
 			// 17. LOCATION
 			// ============================
 
-			case 17:
+			case 18:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Location</h1>
@@ -676,7 +826,7 @@ const Register = () => {
 			// 18. MARITAL STATUS
 			// ============================
 
-			case 18:
+			case 19:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -704,7 +854,7 @@ const Register = () => {
 			// 19. KIDS
 			// ============================
 
-			case 19:
+			case 20:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you have kids?</h1>
@@ -730,7 +880,7 @@ const Register = () => {
 			// 20. BIO
 			// ============================
 
-			case 20:
+			case 21:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -781,7 +931,14 @@ const Register = () => {
 				{/* ================= STEP CONTENT ================= */}
 
 				<div className="flex flex-1 items-center justify-center py-10">
-					<div className="flex w-full flex-col items-center text-center">{renderStep()}</div>
+					<div className="flex w-full flex-col items-center text-center">
+						{error && (
+							<div className="mb-5 w-full rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+								{error}
+							</div>
+						)}
+						{renderStep()}
+					</div>
 				</div>
 
 				{/* ================= NAVIGATION ================= */}
@@ -815,7 +972,9 @@ const Register = () => {
 						<button
 							type="button"
 							onClick={handleNext}
-							className="rounded-xl bg-[#C43266] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#A82A55]">
+							className="rounded-xl bg-[#C43266] px-6 py-3 text-sm font-medium text-white transition hover:bg-linear-to-r
+          from-[#C43266]
+          to-[#652F7B]">
 							{step === totalSteps ? "Finish" : "Next"} →
 						</button>
 					</div>
