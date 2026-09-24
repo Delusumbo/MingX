@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import Heart from "../../assets/images/love.png";
@@ -54,7 +53,7 @@ const Home = () => {
 			</header>
 
 			{/* Hero */}
-			<section className="relative min-h-[640px] overflow-hidden sm:min-h-[720px] md:min-h-[820px] lg:h-200">
+			<section className="relative min-h-160 overflow-hidden sm:min-h-180 md:min-h-205 lg:h-200">
 				{/* Decorative elements — hidden on mobile, shown from md up */}
 				<div className="hidden md:block">
 					<div className="absolute left-[8%] top-[20%] h-4 w-4 rounded-full bg-white md:h-5 md:w-5" />

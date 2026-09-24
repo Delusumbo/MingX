@@ -78,8 +78,8 @@ const Login = () => {
 
 	const location = useLocation();
 	
-
-	const [message, setMessage] = useState(location.state?.message || "");
+	const [message] = useState(location.state?.message || "");
+	// const [message, setMessage] = useState(location.state?.message || "");
 	useEffect(() => {
 		if (location.state?.message) {
 			navigate(location.pathname, {
