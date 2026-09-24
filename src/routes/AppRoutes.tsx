@@ -27,7 +27,7 @@ export const AppRoutes = () => {
 			<Route path="/" element={<Home />} />
 			<Route path="/login" element={<Login />} />
 			<Route path="/register" element={<Signup />} />
-
+			<Route path="/otp" element={<OTP />} />
 			{/* Protected routes */}
 			<Route element={<ProtectedRoute />}>
 				<Route element={<Layout />}>
@@ -46,7 +46,6 @@ export const AppRoutes = () => {
 
 					<Route path="*" element={<Navigate to="/discover" replace />} />
 				</Route>
-				<Route path="/otp" element={<OTP />} />
 			</Route>
 
 			{/* Fallback */}
