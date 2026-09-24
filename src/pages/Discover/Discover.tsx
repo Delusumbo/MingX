@@ -26,6 +26,8 @@ function calculateAge(dob: string) {
 	return age;
 }
 
+console.log(localStorage.getItem('user'))
+
 export default function Discover() {
 	const [people, setPeople] = useState<Person[]>([]);
 	const [likedIds, setLikedIds] = useState<number[]>([]);

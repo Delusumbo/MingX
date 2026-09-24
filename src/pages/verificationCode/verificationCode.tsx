@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import { verifyOtp } from "../../auth/authService";
+import { useAuth } from "../../context/AuthContext"; // adjust to your actual path/file
 
 const OTP = () => {
     const navigate = useNavigate();
@@ -75,6 +76,7 @@ const OTP = () => {
         const nextIndex = Math.min(pastedData.length, 5);
         inputRefs.current[nextIndex]?.focus();
     };
+    const { login } = useAuth();
 
     const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -90,10 +92,9 @@ const OTP = () => {
             setLoading(true);
             setError("");
 
-            await verifyOtp(email, code);
-
-            // OTP verified successfully
-            navigate("/dashboard", { replace: true });
+            const data = await verifyOtp(email, code);
+			login(data.user, data.token); // updates context state, not just localStorage			
+            window.location.href = "/discover";         
         } catch (error) {
             console.error("OTP verification error:", error);
 
