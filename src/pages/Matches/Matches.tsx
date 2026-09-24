@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { MessageCircle, Plus } from "lucide-react";
 import { Header } from "../../components/Layout";
 import { Icon } from "@iconify/react";
@@ -19,13 +20,18 @@ function getOtherUser(conversation: ApiConversation, myId: number | null): ApiUs
 	return conversation.sender;
 }
 
+type PendingReceiver = { id: number; name: string; profilepicture: string | null };
+
 type ChatFilter = "all" | "unread";
 
 export default function Matches() {
 	const myId = getCurrentUserId();
+	const [searchParams] = useSearchParams();
+	const location = useLocation();
 	
 
 	const [conversations, setConversations] = useState<ApiConversation[]>([]);
+	const [pendingReceiver, setPendingReceiver] = useState<PendingReceiver | null>(null);
 	const [loadingConversations, setLoadingConversations] = useState(true);
 	const [conversationsError, setConversationsError] = useState("");
 
@@ -132,6 +138,78 @@ export default function Matches() {
 		load();
 	}, []);
 
+	useEffect(() => {
+		const receiverIdParam = searchParams.get("receiver_id");
+		if (!receiverIdParam || loadingConversations) return;
+
+		const receiverId = Number(receiverIdParam);
+		const existing = conversations.find((c) => getOtherUser(c, myId).id === receiverId);
+
+		if (existing) {
+			setSelectedConversationId(existing.id);
+			setPendingReceiver(null);
+		} else {
+			const personState = location.state?.person as
+				| { id: number; name: string; image?: string }
+				| undefined;
+
+			setSelectedConversationId(null);
+			setPendingReceiver({
+				id: receiverId,
+				name: personState?.name ?? "New match",
+				profilepicture: personState?.image ?? null,
+			});
+		}
+	}, [searchParams, conversations, loadingConversations, myId, location.state]);
+
+	const selectedConversation = conversations.find((c) => c.id === selectedConversationId) ?? null;
+	const selectedOtherUser = selectedConversation
+		? getOtherUser(selectedConversation, myId)
+		: pendingReceiver;
+
+	// ...
+
+	const handleSendMessage = async (options?: { file?: File | null }) => {
+		if (!selectedOtherUser) return;
+
+		const text = messageText.trim();
+		const file = options?.file ?? null;
+
+		if (!text && !file) return;
+
+		try {
+			setSending(true);
+
+			await sendMessage({
+				receiverId: selectedOtherUser.id,
+				messageText: text,
+				file,
+			});
+
+			setMessageText("");
+
+			if (selectedConversationId !== null) {
+				const refreshed = await getMessages(selectedConversationId);
+				setThreadMessages(refreshed);
+			} else {
+				// first message to a new match — a conversation now exists server-side, so refetch the list
+				const data = await getConversations();
+				setConversations(data);
+
+				const created = data.find((c) => getOtherUser(c, myId).id === selectedOtherUser.id);
+				if (created) {
+					setSelectedConversationId(created.id);
+					setPendingReceiver(null);
+					setThreadMessages(await getMessages(created.id));
+				}
+			}
+		} catch (error) {
+			console.error("Send error:", error);
+		} finally {
+			setSending(false);
+		}
+	};
+
 	// Load thread when a conversation is selected
 	useEffect(() => {
 		if (selectedConversationId === null) return;
@@ -151,10 +229,7 @@ export default function Matches() {
 
 		load();
 	}, [selectedConversationId]);
-
-	const selectedConversation = conversations.find((c) => c.id === selectedConversationId) ?? null;
-	const selectedOtherUser = selectedConversation ? getOtherUser(selectedConversation, myId) : null;
-
+	
 	const filteredConversations = conversations.filter((conversation) => {
 		if (chatFilter === "unread") {
 			return conversation.unread_messages_count > 0;
@@ -163,35 +238,7 @@ export default function Matches() {
 		return true;
 	});
 
-	const unreadCount = conversations.filter((c) => c.unread_messages_count > 0).length;
-
-	const handleSendMessage = async (options?: { file?: File | null }) => {
-		if (!selectedOtherUser || selectedConversationId === null) return;
-
-		const text = messageText.trim();
-		const file = options?.file ?? null;
-
-		if (!text && !file) return;
-
-		try {
-			setSending(true);
-
-			await sendMessage({
-				receiverId: selectedOtherUser.id,
-				messageText: text,
-				file,
-			});
-
-			setMessageText("");
-
-			const refreshed = await getMessages(selectedConversationId);
-			setThreadMessages(refreshed);
-		} catch (error) {
-			console.error("Send error:", error);
-		} finally {
-			setSending(false);
-		}
-	};
+	const unreadCount = conversations.filter((c) => c.unread_messages_count > 0).length;	
 
 	const startRecording = async () => {
 		try {
@@ -410,7 +457,7 @@ export default function Matches() {
 
 					{/* Conversation */}
 					<div className="min-h-125 overflow-hidden rounded-[22px] bg-white">
-						{selectedConversation && selectedOtherUser ? (
+						{selectedOtherUser ? (
 							<div className="flex h-125 flex-col">
 								{/* Chat Header */}
 								<div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">

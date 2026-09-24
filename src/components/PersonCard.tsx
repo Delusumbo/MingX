@@ -115,6 +115,7 @@ export default function PersonCard({
 						{/* Message */}
 						<Link
 							to={`/message?receiver_id=${person.id}`}
+							state={{ person: { id: person.id, name: person.name, image: person.image } }}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
 							Message
@@ -137,7 +138,8 @@ export default function PersonCard({
 					<div className="flex items-center gap-3">
 						<Link
 							to={`/message?receiver_id=${person.id}`}
-							className="flex flex-1 items-center justify-center gap-2 rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] py-3 text-sm font-medium text-white">
+							state={{ person: { id: person.id, name: person.name, image: person.image } }}
+							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
 							Message
 						</Link>
