@@ -18,6 +18,7 @@ import Communities from "../pages/Communities/Communities";
 import Share from "../pages/Share/Share";
 import Likes from "../pages/Likes/Likes";
 import OTP from "../pages/verificationCode/verificationCode";
+import EditProfile from "../pages/Profile/EditProfile";
 
 export const AppRoutes = () => {
 	return (
@@ -35,6 +36,7 @@ export const AppRoutes = () => {
 					<Route path="/matches" element={<Matches />} />
 					<Route path="/message" element={<Matches />} />
 					<Route path="/profile" element={<Profile />} />
+					<Route path="/profile/edit" element={<EditProfile />} />
 					<Route path="/verify" element={<Verify />} />
 					<Route path="/communities" element={<Communities />} />
 					<Route path="/premium" element={<Premium />} />
@@ -44,7 +46,7 @@ export const AppRoutes = () => {
 
 					<Route path="*" element={<Navigate to="/discover" replace />} />
 				</Route>
-					<Route path="/otp" element={<OTP />} />
+				<Route path="/otp" element={<OTP />} />
 			</Route>
 
 			{/* Fallback */}

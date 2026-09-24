@@ -54,48 +54,63 @@ const Home = () => {
 			</header>
 
 			{/* Hero */}
-			<section className="relative min-h-screen overflow-hidden lg:h-200">
-				{/* Decorative dots */}
-				<div className="hidden lg:block">
-					<div className="absolute left-[8%] top-[20%] h-5 w-5 rounded-full bg-white" />
+			<section className="relative min-h-[640px] overflow-hidden sm:min-h-[720px] md:min-h-[820px] lg:h-200">
+				{/* Decorative elements — hidden on mobile, shown from md up */}
+				<div className="hidden md:block">
+					<div className="absolute left-[8%] top-[20%] h-4 w-4 rounded-full bg-white md:h-5 md:w-5" />
 
-					{/* Heart */}
-					<img src={Heart} alt="" className="absolute right-[8%] top-[5%]" />
+					<img src={Heart} alt="" className="absolute right-[6%] top-[4%] w-16 md:w-20 lg:w-auto" />
 
-					{/* Abstract line */}
-					<img src={AbstractLine} alt="" className="absolute right-[8%] top-[30%] z-10" />
+					<img
+						src={AbstractLine}
+						alt=""
+						className="absolute right-[8%] top-[26%] z-10 w-24 md:w-32 lg:w-auto"
+					/>
 
-					{/* Profile card */}
-					<img src={ProfileCard} alt="" className="absolute right-[5%] top-[66%] z-30" />
+					<img
+						src={ProfileCard}
+						alt=""
+						className="absolute right-[5%] top-[60%] z-30 w-28 md:w-36 lg:w-auto"
+					/>
 
-					{/* Right card */}
-					<img src={MessageCard} alt="" className="absolute right-[10%] top-[25%] z-30" />
-					<img src={View} alt="" className="absolute left-[10%] top-[30%] z-30" />
+					<img
+						src={MessageCard}
+						alt=""
+						className="absolute right-[10%] top-[22%] z-30 w-28 md:w-36 lg:w-auto"
+					/>
+
+					<img
+						src={View}
+						alt=""
+						className="absolute left-[10%] top-[28%] z-30 w-28 md:w-36 lg:w-auto"
+					/>
 				</div>
 
 				{/* Heading */}
-				<div className="relative z-10 px-5 pt-16 text-center">
-					<h1 className="text-5xl font-bold text-white lg:text-6xl">
+				<div className="relative z-10 px-5 pt-12 text-center sm:pt-16 md:pt-20 lg:pt-16">
+					<h1 className="text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
 						Meet the <br />
 						right people
 					</h1>
 
-					<p className="mx-auto mt-5 max-w-xs text-sm text-white/90">
+					<p className="mx-auto mt-4 max-w-xs text-sm text-white/90 sm:mt-5 sm:max-w-sm sm:text-base">
 						Real conversations, verified people, and meaningful connections built around what
-						matters to you.{" "}
+						matters to you.
 					</p>
 				</div>
 
 				{/* Bottom purple shape */}
-				<div className="hidden lg:block">
-					<img src={Purple} alt="" className="absolute top-125 left-0 w-full h-60  z-0" />
-				</div>
+				<img
+					src={Purple}
+					alt=""
+					className="absolute left-0 top-95 z-0 h-40 w-full sm:top-105 sm:h-48 md:top-115 md:h-56 lg:top-125 lg:h-60"
+				/>
 
 				{/* People */}
 				<img
 					src={People}
 					alt=""
-					className="absolute lg:top-85 left-1/2 z-20 w-100 -translate-x-1/2"
+					className="absolute left-1/2 top-72 z-20 w-64 -translate-x-1/2 sm:top-80 sm:w-80 md:top-90 md:w-96 lg:top-85 lg:w-100"
 				/>
 			</section>
 
@@ -130,7 +145,7 @@ const Home = () => {
 			{/* dating feels */}
 			<section className="container mx-auto px-10 py-10 ">
 				<div className="bg-white rounded-4xl p-10">
-					<h2 className="text-5xl font-bold text-black mb-10 w-full lg:w-125">
+					<h2 className="text-4xl lg:text-5xl font-bold text-black mb-10 w-full lg:w-125">
 						Connecting people that <span className="text-[#C43266]">feels</span> like a{" "}
 						<span className="text-[#C43266]">conversation</span>
 					</h2>
@@ -220,189 +235,142 @@ const Home = () => {
 			</section>
 
 			{/* ready to chat */}
-			<section className="container mx-auto p-10">
-				<div className="flex flex-col items-center justify-between gap-10 lg:flex-row">
-					<div>
-						<h3 className="text-6xl font-bold text-white mb-10">Ready to connect?</h3>
-						<p className="w-full lg:w-125 mb-10 text-white">
+			<section className="container mx-auto px-6 py-10 sm:px-8 lg:p-10">
+				<div className="flex flex-col items-center justify-between gap-8 lg:flex-row lg:gap-10">
+					<div className="text-center lg:text-left">
+						<h3 className="text-3xl font-bold text-white mb-6 sm:text-4xl md:text-5xl lg:text-6xl lg:mb-10">
+							Ready to connect?
+						</h3>
+						<p className="mx-auto mb-6 max-w-md text-sm text-white sm:text-base lg:mx-0 lg:mb-10 lg:w-125 lg:max-w-none">
 							"Skip the small talk and discover conversations with people who share your interests,
 							experiences, and perspective."
 						</p>
 						<Link
 							to="/login"
-							className="block rounded-xl bg-black px-5 py-4 text-center text-xl text-white w-full lg:w-60 hover:bg-[#ED2882]">
+							className="block w-full rounded-xl bg-black px-5 py-3 text-center text-lg text-white hover:bg-[#ED2882] sm:w-auto sm:inline-block lg:w-60 lg:py-4 lg:text-xl">
 							Sign Up
 						</Link>
 					</div>
-					<div className="">
+					<div className="w-full max-w-sm lg:max-w-none lg:w-auto">
 						<img src={Chat} alt="" className="w-full" />
 					</div>
 				</div>
 			</section>
 
 			{/* forever */}
-			<section className="mx-10 my-20 lg:m-30">
-				<h3 className="text-5xl mb-20 font-bold text-white text-center">
+			<section className="mx-6 my-12 sm:mx-8 md:mx-10 md:my-16 lg:m-30">
+				<h3 className="mb-10 text-center text-3xl font-bold text-white sm:text-4xl md:mb-16 md:text-5xl lg:mb-20">
 					Real people. Real connections.
 				</h3>
-				<div className="grid w-full grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 md:gap-10 lg:grid-cols-3">
 					{/* Card */}
 					<div className="group">
 						{/* Image area */}
-						<div className="relative rounded-t-2xl mb-7">
+						<div className="relative mb-7 aspect-4/5 rounded-t-2xl">
 							{/* Default image */}
 							<img
 								src={Forever1}
-								alt=""
-								className="
-          relative z-0
-          block h-full w-full object-cover
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-0
-        "
-							/>
-
-							{/* Hover image */}
-							<img
-								src={Variant1}
-								alt=""
-								className="
-          absolute inset-0 z-0
-          h-full w-full object-cover
-          opacity-0
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-100
-        "
-							/>
-
-							{/* Australia flag - top right */}
-							<img
-								src={Aussie}
-								alt=""
-								className="
-          absolute right-0 bottom-65 lg:bottom-77.5 z-20
-          w-25
-        "
-							/>
-
-							{/* Spain flag - bottom left */}
-							<img
-								src={Spain}
-								alt=""
-								className="
-          absolute top-65 lg:top-77.5 left-0 z-20
-          w-25
-        "
-							/>
-						</div>
-
-						{/* Testimonial */}
-						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
-							<p className="text-base leading-6">
-								"Our first conversation felt natural because we already shared the same core values
-								and cultural background. MingX made it easy to discover someone who understood where
-								I was coming from"
-							</p>
-
-							<p className="mt-8 font-bold">David & Anita</p>
-						</div>
-					</div>
-					<div className="group">
-						{/* Image area */}
-						<div className="relative rounded-t-2xl mb-7">
-							{/* Default image */}
-							<img
-								src={Forever2}
-								alt=""
-								className="
-          relative z-0
-          block h-full w-full object-cover
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-0
-        "
-							/>
-
-							{/* Hover image */}
-							<img
-								src={Variant2}
-								alt=""
-								className="
-          absolute inset-0 z-0
-          h-full w-full object-cover
-          opacity-0
-          transition-opacity duration-500 ease-in-out
-          group-hover:opacity-100
-        "
-							/>
-
-							{/* Australia flag - top right */}
-							<img
-								src={Canada}
-								alt=""
-								className="
-          absolute right-0 bottom-65 lg:bottom-77.5 z-20
-          w-25
-        "
-							/>
-
-							{/* Spain flag - bottom left */}
-							<img
-								src={Swede}
-								alt=""
-								className="
-          absolute bottom-65 lg:top-77.5 left-0 z-20
-          w-25
-        "
-							/>
-						</div>
-
-						{/* Testimonial */}
-						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
-							<p className="text-base leading-6">
-								"I almost gave up on social platforms until I found MingX. It made it easy to move
-								beyond superficial conversations and connect around things that actually matter."
-							</p>
-
-							<p className="mt-8 font-bold">Katherine & Moses</p>
-						</div>
-					</div>
-					<div className="group">
-						{/* Image area */}
-						<div className="relative rounded-t-2xl mb-7">
-							{/* Default image */}
-							<img
-								src={Forever3}
 								alt=""
 								className="relative z-0 block h-full w-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
 							/>
 
 							{/* Hover image */}
 							<img
-								src={Variant3}
+								src={Variant1}
 								alt=""
 								className="absolute inset-0 z-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100"
 							/>
 
-							{/* Australia flag - top right */}
+							{/* Australia flag - top right corner */}
 							<img
-								src={USA}
+								src={Aussie}
 								alt=""
-								className="absolute right-0 bottom-65 lg:bottom-77.5 z-20 w-25"
+								className="absolute -right-2 -top-7 z-20 sm:-right-3 sm:-top-3 lg:-right-4 lg:-top-4"
 							/>
 
-							{/* Spain flag - bottom left */}
-							<img src={Mexico} alt="" className="absolute top-65 lg:top-77.5 left-0 z-20 w-25" />
+							{/* Spain flag - bottom left corner */}
+							<img
+								src={Spain}
+								alt=""
+								className="absolute -bottom-7 -left-2 z-20 sm:-bottom-4 sm:-left-3 lg:-bottom-7 lg:-left-4"
+							/>
 						</div>
 
 						{/* Testimonial */}
-						<div className="rounded-b-2xl bg-[#652F7B] px-6 py-6 text-center text-white">
-							<p className="text-base leading-6">
+						<div className="rounded-b-2xl bg-[#652F7B] px-5 py-5 text-center text-white sm:px-6 sm:py-6">
+							<p className="text-sm leading-6 sm:text-base">
+								"Our first conversation felt natural because we already shared the same core values
+								and cultural background. MingX made it easy to discover someone who understood where
+								I was coming from"
+							</p>
+							<p className="mt-6 font-bold sm:mt-8">David & Anita</p>
+						</div>
+					</div>
+
+					{/* Card 2 — same structure */}
+					<div className="group">
+						<div className="relative mb-7 aspect-4/5 rounded-t-2xl">
+							<img
+								src={Forever2}
+								alt=""
+								className="relative z-0 block h-full w-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+							/>
+							<img
+								src={Variant2}
+								alt=""
+								className="absolute inset-0 z-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100"
+							/>
+							<img
+								src={Canada}
+								alt=""
+								className="absolute -right-2 -top-7 z-20 sm:-right-3 sm:-top-3 lg:-right-4 lg:-top-4"
+							/>
+							<img
+								src={Swede}
+								alt=""
+								className="absolute -bottom-7 -left-2 z-20 sm:-bottom-4 sm:-left-3 lg:-bottom-7 lg:-left-4"
+							/>
+						</div>
+						<div className="rounded-b-2xl bg-[#652F7B] px-5 py-5 text-center text-white sm:px-6 sm:py-6">
+							<p className="text-sm leading-6 sm:text-base">
+								"I almost gave up on social platforms until I found MingX. It made it easy to move
+								beyond superficial conversations and connect around things that actually matter."
+							</p>
+							<p className="mt-6 font-bold sm:mt-8">Katherine & Moses</p>
+						</div>
+					</div>
+
+					{/* Card 3 — same structure */}
+					<div className="group">
+						<div className="relative mb-7 aspect-4/5 rounded-t-2xl">
+							<img
+								src={Forever3}
+								alt=""
+								className="relative z-0 block h-full w-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+							/>
+							<img
+								src={Variant3}
+								alt=""
+								className="absolute inset-0 z-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 ease-in-out group-hover:opacity-100"
+							/>
+							<img
+								src={USA}
+								alt=""
+								className="absolute -right-2 -top-7 z-20 sm:-right-3 sm:-top-3 lg:-right-4 lg:-top-4"
+							/>
+							<img
+								src={Mexico}
+								alt=""
+								className="absolute -bottom-7 -left-2 z-20 sm:-bottom-4 sm:-left-3 lg:-bottom-7 lg:-left-4"
+							/>
+						</div>
+						<div className="rounded-b-2xl bg-[#652F7B] px-5 py-5 text-center text-white sm:px-6 sm:py-6">
+							<p className="text-sm leading-6 sm:text-base">
 								"Living in the diaspora, finding people who genuinely understood my background and
 								perspective was difficult. MingX helped me discover a community where conversations
 								felt effortless."
 							</p>
-
-							<p className="mt-8 font-bold">Annabel & Jerome</p>
+							<p className="mt-6 font-bold sm:mt-8">Annabel & Jerome</p>
 						</div>
 					</div>
 				</div>

@@ -13,8 +13,7 @@ import {
 	UsersRound,
 } from "lucide-react";
 import { Header } from "../../components/Layout";
-import joseph from "../../assets/images/joseph.png";
-
+import { Link } from "react-router-dom";
 
 const storedUser = localStorage.getItem("user");
 
@@ -23,7 +22,9 @@ const user = storedUser ? JSON.parse(storedUser) : null;
 let interests = "Not provided";
 
 try {
-	const parsed = JSON.parse(user?.yourinterest || "[]");
+	const parsed = Array.isArray(user?.yourinterest)
+		? user.yourinterest
+		: JSON.parse(user?.yourinterest || "[]");
 	interests = parsed.join(", ");
 } catch {
 	interests = user?.yourinterest || "Not provided";
@@ -127,9 +128,11 @@ export default function Profile() {
 				<div className="flex items-center justify-between">
 					<h1 className="text-3xl font-bold text-[#67307d]">Profile</h1>
 
-					<button className="rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] px-7 py-3 text-sm font-semibold text-white">
+					<Link
+						to="/profile/edit"
+						className="rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] px-7 py-3 text-sm font-semibold text-white">
 						Edit Profile
-					</button>
+					</Link>
 				</div>
 
 				{/* Profile image */}
@@ -146,7 +149,7 @@ export default function Profile() {
 						</span>
 					</div>
 
-					<h2 className="mt-4 text-lg font-semibold">{ user?.name}</h2>
+					<h2 className="mt-4 text-lg font-semibold">{user?.name}</h2>
 
 					<span className="mt-2 rounded-full bg-[#ca2e6b] px-5 py-2 text-xs text-white">
 						⚑ {user?.goal}

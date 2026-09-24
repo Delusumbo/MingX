@@ -5,7 +5,11 @@ import PersonCard from "../../components/PersonCard";
 import FilterPanel from "../../components/FilterPanel";
 
 import type { Person } from "../../types";
+
 import { getPeople } from "../../services/discoverService";
+import { getLikedUsers } from "../../services/likedService";
+
+
 
 function calculateAge(dob: string) {
 	const birthDate = new Date(dob);
@@ -24,6 +28,9 @@ function calculateAge(dob: string) {
 
 export default function Discover() {
 	const [people, setPeople] = useState<Person[]>([]);
+	const [likedIds, setLikedIds] = useState<number[]>([]);
+	
+
 	const [search, setSearch] = useState("");
 	const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -31,35 +38,52 @@ export default function Discover() {
 	const [error, setError] = useState("");
 
 	useEffect(() => {
-		const loadPeople = async () => {
+		const loadData = async () => {
 			try {
 				setLoading(true);
 				setError("");
 
-				const response = await getPeople();
+				const [peopleData, likedData] = await Promise.all([getPeople(), getLikedUsers()]);
 
-				const users: Person[] = response
-					.filter((item): item is Exclude<typeof item, { isblur: boolean }> => !("isblur" in item))
-					.map((user) => {
-						let images: string[] = [];
+				
 
-						try {
-							images = JSON.parse(user.images || "[]");
-						} catch {
-							images = [];
-						}
+				const likedUsers = likedData.whoyouliked ?? [];
 
-						return {
-							id: user.id,
-							name: user.name,
-							age: calculateAge(user.dob),
-							image: user.profilepicture || images[0] || "",
-							location: [user.state, user.country].filter(Boolean).join(", "),
-							intent: user.goal,
-						};
-					});
+				const ids = likedUsers.map((user: { id: number }) => user.id);
 
-				setPeople(users);
+				setLikedIds(ids);
+
+				/*
+				 * Discover API can contain:
+				 *
+				 * { isblur: false }
+				 *
+				 * so remove those objects.
+				 */
+
+				const users = peopleData.filter((item: any) => !("isblur" in item));
+
+				const mappedPeople: Person[] = users.map((user: any) => {
+					let images: string[] = [];
+
+					try {
+						images = JSON.parse(user.images || "[]");
+					} catch {
+						images = [];
+					}
+
+					return {
+						id: user.id,
+						name: user.name,
+						age: calculateAge(user.dob),
+						image: user.profilepicture || images[0] || "",
+						location: [user.state, user.country].filter(Boolean).join(", "),
+						state: user.state,
+						intent: user.goal,
+					};
+				});
+
+				setPeople(mappedPeople);
 			} catch (error) {
 				console.error("Discover error:", error);
 
@@ -69,8 +93,18 @@ export default function Discover() {
 			}
 		};
 
-		loadPeople();
+		loadData();
 	}, []);
+
+	const handleLiked = (userId: number, isLiked: boolean) => {
+		setLikedIds((current) => {
+			if (isLiked) {
+				return current.includes(userId) ? current : [...current, userId];
+			}
+
+			return current.filter((id) => id !== userId);
+		});
+	};
 
 	const handleFilters = (filters: Record<string, unknown>) => {
 		console.log("Applied filters:", filters);
@@ -116,7 +150,13 @@ export default function Discover() {
 				{!loading && !error && filteredPeople.length > 0 && (
 					<div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
 						{filteredPeople.map((person) => (
-							<PersonCard key={person.id} person={person} showActions={false} />
+							<PersonCard
+								key={person.id}
+								person={person}
+								showActions={false}
+								isLiked={likedIds.includes(person.id)}
+								onLiked={handleLiked}
+							/>
 						))}
 					</div>
 				)}

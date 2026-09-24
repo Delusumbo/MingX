@@ -1,123 +1,197 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Plus } from "lucide-react";
 import { Header } from "../../components/Layout";
-import cynthia from "../../assets/images/cynthia.png";
-import margret from "../../assets/images/margret.png";
-import sophie from "../../assets/images/sophie.png";
-import astra from "../../assets/images/astra.png";
-import monica from "../../assets/images/monica.png";
-import kate from "../../assets/images/kate.png";
-import joseph from "../../assets/images/joseph.png";
 import { Icon } from "@iconify/react";
 
-type Match = {
-	name: string;
-	image: string;
-};
+import {
+	getConversations,
+	getMessages,
+	sendMessage,
+	getCurrentUserId,
+	type ApiConversation,
+	type ApiMessage,
+	type ApiUser,
+} from "../../services/messageService";
 
-const matches: Match[] = [
-	{ name: "Cynthia", image: cynthia },
-	{ name: "Margret", image: margret },
-	{ name: "Sophie", image: sophie },
-	{ name: "Astra", image: astra },
-	{ name: "Monica", image: monica },
-	{ name: "Katrina", image: joseph },
-	{ name: "Monique", image: margret },
-	{ name: "Kate", image: kate },
-	{ name: "Sonia", image: sophie },
-	{ name: "April", image: astra },
-	{ name: "Kholie", image: monica },
-];
+// Derive "the other person" from a conversation given my own id
+function getOtherUser(conversation: ApiConversation, myId: number | null): ApiUser {
+	if (conversation.sender_id === myId) return conversation.receiver;
+	return conversation.sender;
+}
 
-type Chat = Match & {
-	unread: number;
-	active: boolean;
-};
-
-const chats: Chat[] = [
-	{
-		name: "Cynthia Fish",
-		image: cynthia,
-		unread: 2,
-		active: true,
-	},
-	{
-		name: "Margret Hills",
-		image: margret,
-		unread: 0,
-		active: true,
-	},
-	{
-		name: "Monica Cyprus",
-		image: monica,
-		unread: 5,
-		active: true,
-	},
-	{
-		name: "Sophie Miller",
-		image: sophie,
-		unread: 0,
-		active: false,
-	},
-	{
-		name: "Astra Gaze",
-		image: astra,
-		unread: 0,
-		active: false,
-	},
-];
-type Message = {
-	id: number;
-	text: string;
-	sender: "me" | "them";
-	time: string;
-};
-
-const messages: Message[] = [
-	{
-		id: 1,
-		text: "Hello sir",
-		sender: "me",
-		time: "Aug 31, 2:00pm",
-	},
-	{
-		id: 2,
-		text: "You can login now sir",
-		sender: "me",
-		time: "Aug 31, 2:00pm",
-	},
-	{
-		id: 3,
-		text: "Will do that now",
-		sender: "them",
-		time: "Aug 31, 2:00pm",
-	},
-];
-type ChatFilter = "all" | "unread" | "active";
+type ChatFilter = "all" | "unread";
 
 export default function Matches() {
-	const [selected, setSelected] = useState<string | null>(null);
-	const [chatFilter, setChatFilter] = useState<"all" | "unread" | "active">("all");
+	const myId = getCurrentUserId();
+	
+
+	const [conversations, setConversations] = useState<ApiConversation[]>([]);
+	const [loadingConversations, setLoadingConversations] = useState(true);
+	const [conversationsError, setConversationsError] = useState("");
+
+	const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+	const [threadMessages, setThreadMessages] = useState<ApiMessage[]>([]);
+	const [loadingThread, setLoadingThread] = useState(false);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [threadMessages]);
+
+	const [messageText, setMessageText] = useState("");
+	const [sending, setSending] = useState(false);
+
+	const [chatFilter, setChatFilter] = useState<ChatFilter>("all");
 	const [menuOpen, setMenuOpen] = useState(false);
-	const [isRecording, setIsRecording] = useState(false);
-	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+	const [isRecording, setIsRecording] = useState(false);	
 	const [videoCallOpen, setVideoCallOpen] = useState(false);
+	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+	const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const audioChunksRef = useRef<Blob[]>([]);
 	const imageInputRef = useRef<HTMLInputElement>(null);
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const videoStreamRef = useRef<MediaStream | null>(null);
-	const filteredChats = chats.filter((chat) => {
-		if (chatFilter === "unread") {
-			return chat.unread > 0;
+
+	async function blobToWav(blob: Blob, targetSampleRate = 16000): Promise<Blob> {
+		const arrayBuffer = await blob.arrayBuffer();
+		const audioContext = new AudioContext();
+		const decoded = await audioContext.decodeAudioData(arrayBuffer);
+
+		// Downmix to mono + resample to targetSampleRate using an OfflineAudioContext
+		const offlineContext = new OfflineAudioContext(
+			1,
+			Math.ceil(decoded.duration * targetSampleRate),
+			targetSampleRate,
+		);
+
+		const source = offlineContext.createBufferSource();
+		source.buffer = decoded;
+		source.connect(offlineContext.destination);
+		source.start();
+
+		const audioBuffer = await offlineContext.startRendering();
+		await audioContext.close();
+
+		const numSamples = audioBuffer.length;
+		const sampleRate = audioBuffer.sampleRate;
+		const dataSize = numSamples * 2; // mono, 16-bit
+		const buffer = new ArrayBuffer(44 + dataSize);
+		const view = new DataView(buffer);
+
+		const writeString = (offset: number, str: string) => {
+			for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+		};
+
+		writeString(0, "RIFF");
+		view.setUint32(4, 36 + dataSize, true);
+		writeString(8, "WAVE");
+		writeString(12, "fmt ");
+		view.setUint32(16, 16, true);
+		view.setUint16(20, 1, true);
+		view.setUint16(22, 1, true); // mono
+		view.setUint32(24, sampleRate, true);
+		view.setUint32(28, sampleRate * 2, true);
+		view.setUint16(32, 2, true);
+		view.setUint16(34, 16, true);
+		writeString(36, "data");
+		view.setUint32(40, dataSize, true);
+
+		const channelData = audioBuffer.getChannelData(0);
+		let offset = 44;
+
+		for (let i = 0; i < numSamples; i++) {
+			const sample = Math.max(-1, Math.min(1, channelData[i]));
+			const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+			view.setInt16(offset, intSample, true);
+			offset += 2;
 		}
 
-		if (chatFilter === "active") {
-			return chat.active;
+		return new Blob([buffer], { type: "audio/wav" });
+	}
+
+	// Load conversations on mount
+	useEffect(() => {
+		const load = async () => {
+			try {
+				setLoadingConversations(true);
+				setConversationsError("");
+
+				const data = await getConversations();
+				setConversations(data);
+			} catch (error) {
+				console.error("Conversations error:", error);
+				setConversationsError(
+					error instanceof Error ? error.message : "Unable to load conversations.",
+				);
+			} finally {
+				setLoadingConversations(false);
+			}
+		};
+
+		load();
+	}, []);
+
+	// Load thread when a conversation is selected
+	useEffect(() => {
+		if (selectedConversationId === null) return;
+
+		const load = async () => {
+			try {
+				setLoadingThread(true);
+
+				const data = await getMessages(selectedConversationId);
+				setThreadMessages(data);
+			} catch (error) {
+				console.error("Messages error:", error);
+			} finally {
+				setLoadingThread(false);
+			}
+		};
+
+		load();
+	}, [selectedConversationId]);
+
+	const selectedConversation = conversations.find((c) => c.id === selectedConversationId) ?? null;
+	const selectedOtherUser = selectedConversation ? getOtherUser(selectedConversation, myId) : null;
+
+	const filteredConversations = conversations.filter((conversation) => {
+		if (chatFilter === "unread") {
+			return conversation.unread_messages_count > 0;
 		}
 
 		return true;
 	});
+
+	const unreadCount = conversations.filter((c) => c.unread_messages_count > 0).length;
+
+	const handleSendMessage = async (options?: { file?: File | null }) => {
+		if (!selectedOtherUser || selectedConversationId === null) return;
+
+		const text = messageText.trim();
+		const file = options?.file ?? null;
+
+		if (!text && !file) return;
+
+		try {
+			setSending(true);
+
+			await sendMessage({
+				receiverId: selectedOtherUser.id,
+				messageText: text,
+				file,
+			});
+
+			setMessageText("");
+
+			const refreshed = await getMessages(selectedConversationId);
+			setThreadMessages(refreshed);
+		} catch (error) {
+			console.error("Send error:", error);
+		} finally {
+			setSending(false);
+		}
+	};
 
 	const startRecording = async () => {
 		try {
@@ -142,6 +216,8 @@ export default function Matches() {
 				});
 
 				const url = URL.createObjectURL(audioBlob);
+
+				setVoiceBlob(audioBlob);
 				setVoiceUrl(url);
 
 				stream.getTracks().forEach((track) => track.stop());
@@ -174,7 +250,6 @@ export default function Matches() {
 			videoStreamRef.current = stream;
 			setVideoCallOpen(true);
 
-			// Wait for the video element to render
 			setTimeout(() => {
 				if (videoRef.current) {
 					videoRef.current.srcObject = stream;
@@ -209,29 +284,32 @@ export default function Matches() {
 			<section className="px-5 pb-24 pt-10 md:px-8 lg:px-10">
 				<h1 className="text-3xl font-bold text-[#67307d]">Matches</h1>
 
-				{/* Matches */}
-
+				{/* Matches strip */}
 				<div className="mt-6 flex gap-6 overflow-x-auto pb-3">
-					{matches.map((match) => (
-						<button
-							key={match.name}
-							onClick={() => setSelected(match.name)}
-							className="min-w-19 text-center">
-							<img
-								src={match.image}
-								className="mx-auto h-19 w-19 rounded-full border-2 border-[#ca2e6b] object-cover p-1"
-							/>
+					{conversations.map((conversation) => {
+						const otherUser = getOtherUser(conversation, myId);
 
-							<span className="mt-2 block text-sm">{match.name}</span>
-						</button>
-					))}
+						return (
+							<button
+								key={conversation.id}
+								onClick={() => setSelectedConversationId(conversation.id)}
+								className="min-w-19 text-center">
+								<img
+									src={otherUser.profilepicture ?? ""}
+									alt={otherUser.name}
+									className="mx-auto h-19 w-19 rounded-full border-2 border-[#ca2e6b] object-cover p-1"
+								/>
+
+								<span className="mt-2 block text-sm">{otherUser.name}</span>
+							</button>
+						);
+					})}
 				</div>
 
 				<h2 className="mb-4 mt-8 text-lg font-semibold text-[#67307d]">Messages</h2>
 
 				<div className="grid gap-5 lg:grid-cols-[380px_1fr]">
 					{/* Chat list */}
-
 					<div className="rounded-[22px] bg-white lg:p-4">
 						<div className="mb-5 flex items-center gap-3">
 							{/* All */}
@@ -260,25 +338,7 @@ export default function Matches() {
 									className={`ml-2 rounded-full px-2 ${
 										chatFilter === "unread" ? "bg-white text-[#ca2e6b]" : "bg-[#f5e6ed]"
 									}`}>
-									2
-								</b>
-							</button>
-
-							{/* Active */}
-							<button
-								type="button"
-								onClick={() => setChatFilter("active")}
-								className={`rounded-full border px-4 py-2 text-sm transition ${
-									chatFilter === "active"
-										? "border-[#ca2e6b] bg-[#ca2e6b] text-white"
-										: "border-[#ca2e6b] text-[#ca2e6b] hover:bg-[#fff5f8]"
-								}`}>
-								Active
-								<b
-									className={`ml-2 rounded-full px-2 ${
-										chatFilter === "active" ? "bg-white text-[#ca2e6b]" : "bg-[#f5e6ed]"
-									}`}>
-									3
+									{unreadCount}
 								</b>
 							</button>
 
@@ -290,229 +350,326 @@ export default function Matches() {
 							</button>
 						</div>
 
-						{filteredChats.map((chat) => (
-							<button
-								key={chat.name}
-								onClick={() => setSelected(chat.name)}
-								className={`flex w-full items-center gap-3 border-b border-gray-100 py-3 text-left last:border-0 ${
-									selected === chat.name ? "bg-[#fff5f8]" : ""
-								}`}>
-								{/* Profile */}
-								<div className="relative shrink-0">
-									<img
-										src={chat.image}
-										alt={chat.name}
-										className="h-9 w-9 rounded-full border border-[#ca2e6b] object-cover"
-									/>
+						{loadingConversations && (
+							<div className="py-10 text-center text-sm text-gray-500">Loading chats...</div>
+						)}
 
-									{chat.active && (
-										<span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500" />
-									)}
-								</div>
+						{!loadingConversations && conversationsError && (
+							<div className="py-10 text-center text-sm text-red-500">{conversationsError}</div>
+						)}
 
-								{/* Name + message */}
-								<span className="flex-1">
-									<b className="block text-sm">{chat.name}</b>
+						{!loadingConversations && !conversationsError && filteredConversations.length === 0 && (
+							<div className="py-10 text-center text-sm text-gray-500">No conversations yet.</div>
+						)}
 
-									<small
-										className={chat.unread > 0 ? "font-medium text-gray-700" : "text-gray-500"}>
-										Hi
-									</small>
-								</span>
+						{!loadingConversations &&
+							!conversationsError &&
+							filteredConversations.map((conversation) => {
+								const otherUser = getOtherUser(conversation, myId);
 
-								{/* Time + unread */}
-								<span className="text-xs text-[#ca2e6b]">
-									Friday <br />
-									{chat.unread > 0 && (
-										<b className="float-right mt-1 rounded-full bg-[#ca2e6b] px-1.5 py-1 text-white">
-											{chat.unread}
-										</b>
-									)}
-								</span>
-							</button>
-						))}
+								return (
+									<button
+										key={conversation.id}
+										onClick={() => setSelectedConversationId(conversation.id)}
+										className={`flex w-full items-center gap-3 border-b border-gray-100 py-3 text-left last:border-0 ${
+											selectedConversationId === conversation.id ? "bg-[#fff5f8]" : ""
+										}`}>
+										{/* Profile */}
+										<div className="relative shrink-0">
+											<img
+												src={otherUser.profilepicture ?? ""}
+												alt={otherUser.name}
+												className="h-9 w-9 rounded-full border border-[#ca2e6b] object-cover"
+											/>
+										</div>
+
+										{/* Name + message */}
+										<span className="flex-1">
+											<b className="block text-sm">{otherUser.name}</b>
+
+											<small
+												className={
+													conversation.unread_messages_count > 0
+														? "font-medium text-gray-700"
+														: "text-gray-500"
+												}>
+												Tap to view messages
+											</small>
+										</span>
+
+										{/* Unread */}
+										{conversation.unread_messages_count > 0 && (
+											<b className="rounded-full bg-[#ca2e6b] px-1.5 py-1 text-xs text-white">
+												{conversation.unread_messages_count}
+											</b>
+										)}
+									</button>
+								);
+							})}
 					</div>
 
 					{/* Conversation */}
-
 					<div className="min-h-125 overflow-hidden rounded-[22px] bg-white">
-						{selected ? (
-							(() => {
-								const selectedChat = chats.find((chat) => chat.name === selected);
+						{selectedConversation && selectedOtherUser ? (
+							<div className="flex h-125 flex-col">
+								{/* Chat Header */}
+								<div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+									<div className="flex items-center gap-3">
+										<button
+											type="button"
+											className="text-gray-800 lg:hidden"
+											onClick={() => setSelectedConversationId(null)}>
+											<Icon icon="boxicons:chevron-left" width="24" height="24" />
+										</button>
 
-								if (!selectedChat) return null;
+										<div className="relative">
+											<img
+												src={selectedOtherUser.profilepicture ?? ""}
+												alt={selectedOtherUser.name}
+												className="h-10 w-10 rounded-full border-2 border-[#ca2e6b] object-cover p-px"
+											/>
+										</div>
 
-								return (
-									<div className="flex h-125 flex-col">
-										{/* Chat Header */}
-										<div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-											<div className="flex items-center gap-3">
-												{/* Back button - useful on mobile */}
-												<button
-													type="button"
-													className="text-gray-800 lg:hidden"
-													onClick={() => setSelected(null)}>
-													<Icon icon="boxicons:chevron-left" width="24" height="24" />
-												</button>
+										<div>
+											<h3 className="text-sm font-medium text-gray-900">
+												{selectedOtherUser.name}
+											</h3>
 
-												{/* Profile */}
-												<div className="relative">
-													<img
-														src={selectedChat.image}
-														alt={selectedChat.name}
-														className="h-10 w-10 rounded-full border-2 border-[#ca2e6b] object-cover p-px"
-													/>
+											<p className="text-xs text-gray-400">Tap to view profile</p>
+										</div>
+									</div>
 
-													<span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-green-500" />
-												</div>
+									{/* Chat actions */}
+									<div className="flex items-center gap-4">
+										<button
+											type="button"
+											onClick={startVideoCall}
+											className="grid h-9 w-14 place-items-center rounded-xl border border-[#ca2e6b] text-[#ca2e6b] transition hover:bg-[#f9e8ef]">
+											<Icon icon="boxicons:video" width="21" height="21" />
+										</button>
 
-												<div>
-													<h3 className="text-sm font-medium text-gray-900">{selectedChat.name}</h3>
+										<div className="relative">
+											<button
+												type="button"
+												onClick={() => setMenuOpen((prev) => !prev)}
+												className="grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white">
+												<Icon icon="solar:menu-dots-bold" width="20" height="20" />
+											</button>
 
-													<p className="text-xs text-gray-400">Tap to view profile</p>
-												</div>
-											</div>
+											<input
+												ref={imageInputRef}
+												type="file"
+												accept="image/*"
+												className="hidden"
+												onChange={async (e) => {
+													const file = e.target.files?.[0] ?? null;
 
-											{/* Chat actions */}
-											<div className="flex items-center gap-4">
-												<button
-													type="button"
-													onClick={startVideoCall}
-													className="grid h-9 w-14 place-items-center rounded-xl border border-[#ca2e6b] text-[#ca2e6b] transition hover:bg-[#f9e8ef]">
-													<Icon icon="boxicons:video" width="21" height="21" />
-												</button>
+													setMenuOpen(false);
 
-												<div className="relative">
+													if (file) {
+														await handleSendMessage({ file });
+													}
+
+													e.target.value = ""; // allow re-selecting the same file later
+												}}
+											/>
+
+											{menuOpen && (
+												<div className="absolute right-0 top-11 z-50 w-42.5 overflow-hidden rounded-xl border border-gray-100 bg-white p-1 shadow-lg">
 													<button
 														type="button"
-														onClick={() => setMenuOpen((prev) => !prev)}
-														className="grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white">
-														<Icon icon="solar:menu-dots-bold" width="20" height="20" />
+														onClick={() => imageInputRef.current?.click()}
+														className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-700 transition hover:bg-[#f9e8ef] hover:text-[#ca2e6b]">
+														<Icon icon="boxicons:image" width="19" height="19" />
+
+														<span>Image</span>
 													</button>
-
-													<input
-														ref={imageInputRef}
-														type="file"
-														accept="image/*"
-														className="hidden"
-														onChange={(e) => {
-															const file = e.target.files?.[0];
-
-															if (file) {
-																console.log("Selected image:", file);
-															}
-
-															setMenuOpen(false);
-														}}
-													/>
-
-													{menuOpen && (
-														<div className="absolute right-0 top-11 z-50 w-42.5 overflow-hidden rounded-xl border border-gray-100 bg-white p-1 shadow-lg">
-															<button
-																type="button"
-																onClick={() => imageInputRef.current?.click()}
-																className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-700 transition hover:bg-[#f9e8ef] hover:text-[#ca2e6b]">
-																<Icon icon="boxicons:image" width="19" height="19" />
-
-																<span>Image</span>
-															</button>
-
-															<button
-																type="button"
-																onClick={() => {
-																	setMenuOpen(false);
-
-																	if (isRecording) {
-																		stopRecording();
-																	} else {
-																		startRecording();
-																	}
-																}}
-																className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-700 transition hover:bg-[#f9e8ef] hover:text-[#ca2e6b]">
-																<Icon
-																	icon={
-																		isRecording ? "boxicons:stop-circle" : "boxicons:microphone"
-																	}
-																	width="19"
-																	height="19"
-																/>
-
-																<span>{isRecording ? "Stop Recording" : "Voice Note"}</span>
-															</button>
-														</div>
-													)}
-												</div>
-											</div>
-										</div>
-
-										{/* Messages */}
-										<div className="flex flex-1 flex-col justify-end overflow-y-auto px-5 py-6">
-											<div className="space-y-7">
-												{messages.map((message) => (
-													<div
-														key={message.id}
-														className={`flex flex-col ${
-															message.sender === "me" ? "items-end" : "items-start"
-														}`}>
-														<div
-															className={`max-w-[75%] rounded-[18px] px-4 py-3 text-sm ${
-																message.sender === "me"
-																	? "rounded-tr-none bg-[#d9d9d9] text-gray-900"
-																	: "rounded-tl-none bg-[#f8dfe8] text-gray-900"
-															}`}>
-															{message.text}
-														</div>
-
-														<span className="mt-2 text-[11px] text-gray-400">{message.time}</span>
-													</div>
-												))}
-											</div>
-										</div>
-
-										{voiceUrl && (
-											<div className="border-t border-gray-100 px-4 py-3">
-												<div className="flex items-center gap-3 rounded-xl bg-[#f9e8ef] p-3">
-													<Icon
-														icon="boxicons:microphone"
-														width="20"
-														height="20"
-														className="text-[#ca2e6b]"
-													/>
-
-													<audio controls src={voiceUrl} className="h-9 flex-1" />
 
 													<button
 														type="button"
 														onClick={() => {
-															URL.revokeObjectURL(voiceUrl);
-															setVoiceUrl(null);
+															setMenuOpen(false);
+
+															if (isRecording) {
+																stopRecording();
+															} else {
+																startRecording();
+															}
 														}}
-														className="text-gray-400 hover:text-red-500">
-														<Icon icon="boxicons:x" width="20" height="20" />
+														className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-gray-700 transition hover:bg-[#f9e8ef] hover:text-[#ca2e6b]">
+														<Icon
+															icon={isRecording ? "boxicons:stop-circle" : "boxicons:microphone"}
+															width="19"
+															height="19"
+														/>
+
+														<span>{isRecording ? "Stop Recording" : "Voice Note"}</span>
 													</button>
 												</div>
-											</div>
-										)}
-
-										{/* Message Input */}
-										<div className="border-t border-gray-100 p-4">
-											<div className="flex items-center gap-3 rounded-full bg-[#f9e8ef] px-4 py-2">
-												<input
-													type="text"
-													placeholder="Write a message..."
-													className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
-												/>
-
-												<button
-													type="button"
-													className="grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white">
-													<Icon icon="boxicons:send" width="18" height="18" />
-												</button>
-											</div>
+											)}
 										</div>
 									</div>
-								);
-							})()
+								</div>
+
+								{/* Messages */}
+								{/* Messages */}
+								<div className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
+									{loadingThread ? (
+										<div className="text-center text-sm text-gray-500">Loading messages...</div>
+									) : (
+										<div className="space-y-7">
+											{threadMessages.map((message) => {
+												const isMe = message.sender_id === myId;
+												const isAudio = message.file?.match(/\.(webm|mp3|wav|m4a|ogg)$/i);
+												const isImage = message.file?.match(/\.(png|jpe?g|gif|webp)$/i);
+												const isVideo = message.file?.match(/\.(mp4|mov|webm)$/i) && !isAudio;
+
+												return (
+													<div
+														key={message.id}
+														className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+														<div
+															className={`max-w-[75%] overflow-hidden rounded-[18px] text-sm ${
+																message.file ? "" : "px-4 py-3"
+															} ${
+																isMe
+																	? "rounded-tr-none bg-[#d9d9d9] text-gray-900"
+																	: "rounded-tl-none bg-[#f8dfe8] text-gray-900"
+															}`}>
+															{isImage && (
+																<img
+																	src={message.file!}
+																	alt="Attachment"
+																	className="max-h-64 w-full object-cover"
+																/>
+															)}
+
+															{isVideo && (
+																<video src={message.file!} controls className="max-h-64 w-full" />
+															)}
+
+															{isAudio && (
+																<audio src={message.file!} controls className="m-2 h-9" />
+															)}
+
+															{!message.file && message.message_text}
+
+															{message.file && message.message_text && (
+																<p className="px-4 py-2">{message.message_text}</p>
+															)}
+														</div>
+
+														<span className="mt-2 text-[11px] text-gray-400">
+															{new Date(message.created_at).toLocaleString()}
+														</span>
+													</div>
+												);
+											})}
+
+											<div ref={messagesEndRef} />
+										</div>
+									)}
+								</div>
+								{isRecording && (
+									<div className="border-t border-gray-100 px-4 py-3">
+										<div className="flex items-center gap-3 rounded-xl bg-red-50 p-3">
+											<span className="relative flex h-3 w-3">
+												<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+												<span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+											</span>
+
+											<span className="flex-1 text-sm font-medium text-red-600">
+												Recording voice note...
+											</span>
+
+											<button
+												type="button"
+												onClick={stopRecording}
+												className="flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600">
+												<Icon icon="boxicons:stop-circle" width="16" height="16" />
+												Stop
+											</button>
+										</div>
+									</div>
+								)}
+
+								{voiceUrl && (
+									<div className="border-t border-gray-100 px-4 py-3">
+										<div className="flex items-center gap-3 rounded-xl bg-[#f9e8ef] p-3">
+											<Icon
+												icon="boxicons:microphone"
+												width="20"
+												height="20"
+												className="text-[#ca2e6b]"
+											/>
+
+											<audio controls src={voiceUrl} className="h-9 flex-1" />
+
+											<button
+												type="button"
+												disabled={sending}
+												onClick={async () => {
+													if (!voiceBlob) return;
+
+													try {
+														const wavBlob = await blobToWav(voiceBlob);
+														const file = new File([wavBlob], `voice-note-${Date.now()}.wav`, {
+															type: "audio/wav",
+														});
+
+														await handleSendMessage({ file });
+													} catch (error) {
+														console.error("Voice conversion error:", error);
+													} finally {
+														URL.revokeObjectURL(voiceUrl);
+														setVoiceUrl(null);
+														setVoiceBlob(null);
+													}
+												}}
+												className="text-[#ca2e6b] disabled:opacity-60">
+												<Icon icon="boxicons:send" width="20" height="20" />
+											</button>
+
+											<button
+												type="button"
+												onClick={() => {
+													URL.revokeObjectURL(voiceUrl);
+													setVoiceUrl(null);
+													setVoiceBlob(null);
+												}}
+												className="text-gray-400 hover:text-red-500">
+												<Icon icon="boxicons:x" width="20" height="20" />
+											</button>
+										</div>
+									</div>
+								)}
+
+								{/* Message Input */}
+								<div className="border-t border-gray-100 p-4">
+									<div className="flex items-center gap-3 rounded-full bg-[#f9e8ef] px-4 py-2">
+										<input
+											type="text"
+											value={messageText}
+											onChange={(e) => setMessageText(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter" && !sending) {
+													handleSendMessage();
+												}
+											}}
+											placeholder="Write a message..."
+											className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
+										/>
+
+										<button
+											type="button"
+											onClick={() => handleSendMessage()}
+											disabled={sending || !messageText.trim()}
+											className="grid h-9 w-9 place-items-center rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white disabled:opacity-60">
+											<Icon icon="boxicons:send" width="18" height="18" />
+										</button>
+									</div>
+								</div>
+							</div>
 						) : (
 							/* Empty state */
 							<div className="grid min-h-125 place-items-center text-center">
@@ -532,34 +689,27 @@ export default function Matches() {
 					</div>
 				</div>
 			</section>
-			{videoCallOpen && selected && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-5">
-					<div className="relative h-full max-h-[700px] w-full max-w-[1000px] overflow-hidden rounded-3xl bg-gray-900">
-						{/* Remote user placeholder */}
+
+			{videoCallOpen && selectedOtherUser && (
+				<div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-5">
+					<div className="relative h-full max-h-175 w-full max-w-250 overflow-hidden rounded-3xl bg-gray-900">
 						<div className="flex h-full items-center justify-center">
 							<div className="text-center text-white">
 								<div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full">
-									{(() => {
-										const person = chats.find((chat) => chat.name === selected);
-
-										return person ? (
-											<img
-												src={person.image}
-												alt={person.name}
-												className="h-full w-full object-cover"
-											/>
-										) : null;
-									})()}
+									<img
+										src={selectedOtherUser.profilepicture ?? ""}
+										alt={selectedOtherUser.name}
+										className="h-full w-full object-cover"
+									/>
 								</div>
 
-								<h2 className="text-xl font-semibold">{selected}</h2>
+								<h2 className="text-xl font-semibold">{selectedOtherUser.name}</h2>
 
 								<p className="mt-1 text-sm text-white/60">Video call</p>
 							</div>
 						</div>
 
-						{/* Your camera */}
-						<div className="absolute right-5 top-5 h-[180px] w-[130px] overflow-hidden rounded-2xl border-2 border-white/20 bg-black shadow-xl">
+						<div className="absolute right-5 top-5 h-45 w-32.5 overflow-hidden rounded-2xl border-2 border-white/20 bg-black shadow-xl">
 							<video
 								ref={videoRef}
 								autoPlay
@@ -569,23 +719,19 @@ export default function Matches() {
 							/>
 						</div>
 
-						{/* Call controls */}
 						<div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-4">
-							{/* Microphone */}
 							<button
 								type="button"
 								className="grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
 								<Icon icon="boxicons:microphone" width="22" height="22" />
 							</button>
 
-							{/* Camera */}
 							<button
 								type="button"
 								className="grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
 								<Icon icon="boxicons:video" width="22" height="22" />
 							</button>
 
-							{/* End call */}
 							<button
 								type="button"
 								onClick={endVideoCall}
@@ -594,7 +740,6 @@ export default function Matches() {
 							</button>
 						</div>
 
-						{/* Close */}
 						<button
 							type="button"
 							onClick={endVideoCall}

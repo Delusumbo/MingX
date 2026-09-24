@@ -39,8 +39,7 @@ const Register = () => {
 		name: "",
 		phone: "",
 		dateOfBirth: "",
-		gender: "",
-		location: "",
+		gender: "",		
 		lookingFor: "",
 		goal: "",
 		belief: "",
@@ -811,13 +810,19 @@ const Register = () => {
 
 						<button
 							type="button"
-							onClick={() => updateField("location", "Current location")}
+							onClick={() => {
+								// Example for now
+								updateField("state", "Lagos");
+								updateField("country", "Nigeria");
+							}}
 							className="mt-8 rounded-xl bg-[#F9E8EE] px-8 py-4 text-sm text-gray-700 hover:ring-2 hover:ring-[#C43266]/30">
 							📍 Use my current location
 						</button>
 
-						{formData.location && (
-							<p className="mt-3 text-sm text-[#C43266]">{formData.location}</p>
+						{(formData.state || formData.country) && (
+							<p className="mt-3 text-sm text-[#C43266]">
+								{[formData.state, formData.country].filter(Boolean).join(", ")}
+							</p>
 						)}
 					</>
 				);
