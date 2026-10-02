@@ -4,9 +4,7 @@ import { ChevronRight, Search, UsersRound, Plus, X, MessagesSquare } from "lucid
 import { Header } from "../../components/Layout";
 import {
 	createCommunity,
-	getCommunities,
-	getCommunity,
-	searchCommunities,
+	getCommunities,	
 	joinCommunity,
 	leaveCommunity,
 	checkCommunityMembership,
@@ -77,9 +75,7 @@ export default function Communities() {
 
 	// Selected community
 	const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
-
-	// Community details
-	const [communityDetails, setCommunityDetails] = useState<unknown>(null);
+	
 
 	// Membership
 	const [isMember, setIsMember] = useState(false);
@@ -97,8 +93,7 @@ export default function Communities() {
 	// Leaving community
 	const [leavingId, setLeavingId] = useState<number | null>(null);
 
-	// Region filter
-	const [regionFilter, setRegionFilter] = useState("");
+	
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -294,19 +289,13 @@ export default function Communities() {
 
 	const handleViewCommunity = async (community: Community) => {
 		setSelectedCommunity(community);
-		setCommunityDetails(null);
 		setMessages([]);
 		setIsMember(false);
 
 		try {
 			setCheckingMembership(true);
 
-			const [details, membership] = await Promise.all([
-				getCommunity(community.id),
-				checkCommunityMembership(community.id),
-			]);
-
-			setCommunityDetails(details);
+			const membership = await checkCommunityMembership(community.id);
 
 			if (typeof membership === "object" && membership !== null && "is_member" in membership) {
 				setIsMember(Boolean((membership as { is_member: unknown }).is_member));
@@ -321,28 +310,7 @@ export default function Communities() {
 			setCheckingMembership(false);
 		}
 	};
-
-	const loadCommunitiesByRegion = async (region: string) => {
-		try {
-			setLoading(true);
-			setError("");
-
-			const data = await getCommunities(region);
-
-			if (!Array.isArray(data)) {
-				throw new Error("Invalid communities response.");
-			}
-
-			setCommunities(data.map((community) => mapCommunity(community as ApiCommunity)));
-		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to load communities.";
-
-			setError(message);
-			showToast("error", message);
-		} finally {
-			setLoading(false);
-		}
-	};
+	
 	const handleLeaveCommunity = async (community: Community) => {
 		const confirmed = window.confirm(`Are you sure you want to leave ${community.name}?`);
 
@@ -727,8 +695,7 @@ export default function Communities() {
 							<button
 								type="button"
 								onClick={() => {
-									setSelectedCommunity(null);
-									setCommunityDetails(null);
+									setSelectedCommunity(null);									
 									setMessages([]);
 								}}
 								className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200">
