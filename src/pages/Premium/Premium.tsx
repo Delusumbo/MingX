@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Crown, Sparkles, X } from "lucide-react";
 import SquarePayment from "../../components/SquarePayment";
+import { createSubscription } from "../../services/subscriptionService";
 const features = [
 	"See who liked you already",
 	"Unlimited likes",
@@ -113,14 +114,7 @@ export default function Premium() {
 						</div>
 
 						{/* Square */}
-						<SquarePayment
-							amount={60}
-							onTokenReceived={(token) => {
-								console.log("Square token received:", token);
-
-								// Send this token to your Laravel backend here.
-							}}
-						/>
+						<SquarePayment amount={60} onTokenReceived={createSubscription} />
 					</div>
 				</div>
 			)}

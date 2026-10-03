@@ -8,7 +8,7 @@ declare global {
 
 type SquarePaymentProps = {
 	amount?: number;
-	onTokenReceived?: (token: string) => void;
+	onTokenReceived?: (token: string) => void | Promise<unknown>;
 };
 
 export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePaymentProps) {
@@ -71,9 +71,9 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 			if (result.status === "OK") {
 				const token = result.token;
 
-				console.log("Square token:", token);
-
-				onTokenReceived?.(token);
+				if (onTokenReceived) {
+					await onTokenReceived(token);
+				}
 
 				setSuccess(true);
 			} else {
@@ -99,10 +99,10 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 					✓
 				</div>
 
-				<h3 className="mt-5 text-xl font-bold text-gray-900">Payment verified!</h3>
+				<h3 className="mt-5 text-xl font-bold text-gray-900">Subscription active!</h3>
 
 				<p className="mt-2 text-sm text-gray-500">
-					Your payment details have been verified successfully.
+					Your payment was successful and your subscription is active.
 				</p>
 			</div>
 		);
