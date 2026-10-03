@@ -23,6 +23,7 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 
 	useEffect(() => {
 		let mounted = true;
+		let cardInstance: any = null;
 
 		const initializeCard = async () => {
 			try {
@@ -35,9 +36,12 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 
 				const payments = window.Square.payments(appId, locationId);
 
-				const cardInstance = await payments.card();
+				cardInstance = await payments.card();
 
-				if (!mounted) return;
+				if (!mounted) {
+					await cardInstance.destroy();
+					return;
+				}
 
 				await cardInstance.attach("#card-container");
 
@@ -56,8 +60,12 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 
 		return () => {
 			mounted = false;
+
+			if (cardInstance) {
+				cardInstance.destroy().catch(() => {});
+			}
 		};
-	}, [appId, locationId]);
+	}, []);
 
 	const handlePayment = async () => {
 		if (!card) return;
@@ -66,10 +74,35 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 			setProcessing(true);
 			setError("");
 
-			const result = await card.tokenize();
+			/*
+			 * These details allow Square to determine whether
+			 * Strong Customer Authentication is required.
+			 */
+			const verificationDetails = {
+				amount: amount.toFixed(2),
+
+				billingContact: {
+					givenName: "MingX",
+					familyName: "User",
+					email: JSON.parse(localStorage.getItem("user") || "{}")?.email || "",
+					countryCode: "US",
+				},
+
+				currencyCode: "USD",
+
+				intent: "CHARGE",
+
+				customerInitiated: true,
+
+				sellerKeyedIn: false,
+			};
+
+			const result = await card.tokenize(verificationDetails);
 
 			if (result.status === "OK") {
 				const token = result.token;
+
+				console.log("Square payment token received:", token);
 
 				if (onTokenReceived) {
 					await onTokenReceived(token);
@@ -115,7 +148,7 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 			{loading && <p className="mt-3 text-center text-sm text-gray-500">Loading payment form...</p>}
 
 			{error && (
-				<div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600 whitespace-pre-line">
+				<div className="mt-4 whitespace-pre-line rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-600">
 					{error}
 				</div>
 			)}
@@ -123,9 +156,9 @@ export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePa
 			<button
 				type="button"
 				onClick={handlePayment}
-				disabled={loading || processing}
+				disabled={loading || processing || !card}
 				className="mt-5 h-12.5 w-full rounded-full bg-[#CC3263] text-[17px] font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-				{processing ? "Processing..." : `Pay $${amount}/month`}
+				{processing ? "Verifying payment..." : `Pay $${amount}/month`}
 			</button>
 		</div>
 	);
