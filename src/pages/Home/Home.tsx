@@ -221,7 +221,7 @@ const Home = () => {
 								03
 							</p>
 							<div className="mt-5">
-								<h3 className="text-xl font-bold text-black my-3">Start a conersation</h3>
+								<h3 className="text-xl font-bold text-black my-3">Start a conversation</h3>
 								<hr className="text-[#652F7B4D]" />
 								<p className="my-3">
 									Connect, exchange ideas, and build meaningful relationships through genuine

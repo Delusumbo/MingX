@@ -103,14 +103,7 @@ export default function PersonCard({
 
 				{/* Actions */}
 				{showActions && (
-					<div className="flex items-center justify-between gap-3">
-						{/* Pass */}
-						<button
-							type="button"
-							aria-label={`Pass on ${person.name}`}
-							className="grid h-11 w-11 place-items-center rounded-full border border-gray-200 text-gray-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-500">
-							✕
-						</button>
+					<div className="flex items-center justify-between gap-3">						
 
 						{/* Message */}
 						<Link
