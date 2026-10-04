@@ -11,7 +11,7 @@ type SquarePaymentProps = {
 	onTokenReceived?: (token: string) => void | Promise<unknown>;
 };
 
-export default function SquarePayment({ amount = 60, onTokenReceived }: SquarePaymentProps) {
+export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePaymentProps) {
 	const [card, setCard] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
 	const [processing, setProcessing] = useState(false);

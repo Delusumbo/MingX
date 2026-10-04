@@ -41,7 +41,7 @@ export default function Premium() {
 							<span className="text-sm font-semibold uppercase tracking-wider"> Premium </span>
 						</div>
 						<div className="mt-2 flex items-end justify-center gap-1">
-							<span className="text-4xl font-bold">$60</span>
+							<span className="text-4xl font-bold">$10</span>
 							<span className="mb-1 text-sm text-white/80"> /month </span>
 						</div>
 						<p className="mt-2 text-sm text-white/80"> Get access to all premium features. </p>
@@ -114,7 +114,7 @@ export default function Premium() {
 						</div>
 
 						{/* Square */}
-						<SquarePayment amount={60} onTokenReceived={createSubscription} />
+						<SquarePayment amount={10} onTokenReceived={createSubscription} />
 					</div>
 				</div>
 			)}

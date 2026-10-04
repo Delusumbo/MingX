@@ -9,7 +9,7 @@ export async function createSubscription(cardNonce: string): Promise<unknown> {
 			"Content-Type": "application/json",
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
 		},
-		body: JSON.stringify({ card_nonce: cardNonce }),
+		body: JSON.stringify({ card_nonce: cardNonce, platform: "android" }),
 	});
 
 	const responseText = await response.text();

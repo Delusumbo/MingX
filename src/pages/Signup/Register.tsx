@@ -12,6 +12,7 @@ type FormData = {
 	lookingFor: string;
 	goal: string;
 	belief: string;
+	tribe: string;
 	sexualOrientation: string;
 	interests: string[];
 	zodiac: string;
@@ -34,6 +35,7 @@ const Register = () => {
 	 const navigate = useNavigate();
 	const [step, setStep] = useState(1);
 	const [error, setError] = useState("");
+	const [creating, setCreating] = useState(false);
 
 	const [formData, setFormData] = useState({
 		name: "",
@@ -43,6 +45,7 @@ const Register = () => {
 		lookingFor: "",
 		goal: "",
 		belief: "",
+		tribe: "",
 		sexualOrientation: "",
 		interests: [] as string[],
 		zodiac: "",
@@ -64,7 +67,77 @@ const Register = () => {
 		profilePicture: null as File | null,
 	});
 
-	const totalSteps = 21;
+	const totalSteps = 22;
+	const importantStepNumbers = new Set([1, 2, 3, 4, 5, 17]);
+
+	const isAgeOverTwenty = (dateString: string) => {
+		if (!dateString) return false;
+
+		const dob = new Date(dateString);
+		if (Number.isNaN(dob.getTime())) return false;
+
+		const minimumAgeDate = new Date();
+		minimumAgeDate.setFullYear(minimumAgeDate.getFullYear() - 20);
+
+		return dob < minimumAgeDate;
+	};
+
+	const validateStep = (currentStep: number) => {
+		const trimmedName = formData.name.trim();
+		const trimmedEmail = formData.email.trim();
+
+		switch (currentStep) {
+			case 1:
+				if (!trimmedName) {
+					setError("Please enter your name to continue.");
+					return false;
+				}
+				break;
+			case 2:
+				if (!trimmedEmail) {
+					setError("Please enter your email address.");
+					return false;
+				}
+				if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+					setError("Please enter a valid email address.");
+					return false;
+				}
+				break;
+			case 3:
+				if (!formData.dateOfBirth) {
+					setError("Please select your date of birth.");
+					return false;
+				}
+				if (!isAgeOverTwenty(formData.dateOfBirth)) {
+					setError("You must be over 20 years old to continue.");
+					return false;
+				}
+				break;
+			case 4:
+				if (!formData.gender) {
+					setError("Please select your gender.");
+					return false;
+				}
+				break;
+			case 5:
+				if (!formData.lookingFor) {
+					setError("Please tell us who you are looking for.");
+					return false;
+				}
+				break;
+			case 17:
+				if (!formData.profilePicture) {
+					setError("Please upload a profile picture.");
+					return false;
+				}
+				break;
+			default:
+				break;
+		}
+
+		setError("");
+		return true;
+	};
 
 	// --------------------------------
 	// UPDATE FORM DATA
@@ -123,6 +196,10 @@ const Register = () => {
 	// --------------------------------
 
 	const handleNext = () => {
+		if (importantStepNumbers.has(step) && !validateStep(step)) {
+			return;
+		}
+
 		if (step === totalSteps) {
 			handleSubmit();
 			return;
@@ -146,6 +223,10 @@ const Register = () => {
 	// --------------------------------
 
 	const handleSkip = () => {
+		if (importantStepNumbers.has(step)) {
+			return;
+		}
+
 		if (step < totalSteps) {
 			setStep((prev) => prev + 1);
 		}
@@ -173,6 +254,22 @@ const Register = () => {
 		"Hindu",
 		"Traditional",
 		"Spiritual",
+		"Other",
+		"Prefer not to say",
+	];
+	const tribeOptions = [
+		"Yoruba",
+		"Igbo",
+		"Hausa",
+		"Ijaw",
+		"Ibibio",
+		"Efik",
+		"Kanuri",
+		"Tiv",
+		"Edo",
+		"Urhobo",
+		"Isoko",
+		"Fulani",
 		"Other",
 		"Prefer not to say",
 	];
@@ -266,6 +363,16 @@ const Register = () => {
 
 	const handleSubmit = async () => {
 		try {
+			setCreating(true);
+			setError("");
+
+			if (!isAgeOverTwenty(formData.dateOfBirth)) {
+				setError("You must be over 20 years old to register.");
+				setStep(3);
+				setCreating(false);
+				return;
+			}
+
 			const form = new FormData();
 
 			form.append("name", formData.name);
@@ -280,6 +387,7 @@ const Register = () => {
 			form.append("height", formData.height);
 			form.append("weight", formData.weight);
 			form.append("belief", formData.belief);
+			form.append("tribe", formData.tribe);
 			form.append("sexual_orientation", formData.sexualOrientation);
 			form.append("zodiac_sign", formData.zodiac);
 			form.append("education_level", formData.education);
@@ -311,6 +419,8 @@ const Register = () => {
 			console.error("Registration error:", error);
 
 			setError(error instanceof Error ? error.message : "Something went wrong");
+
+			setCreating(false);
 		}
 	};
 
@@ -326,6 +436,7 @@ const Register = () => {
 	};
 
 	const renderStep = () => {
+		const isImportantStep = importantStepNumbers.has(step);
 		switch (step) {
 			// ============================
 			// 1. NAME
@@ -334,6 +445,11 @@ const Register = () => {
 			case 1:
 				return (
 					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<p className="text-sm text-gray-800">Hey You!</p>
 
 						<h1 className="mt-5 text-2xl font-bold text-black sm:text-3xl">What's your name?</h1>
@@ -347,16 +463,19 @@ const Register = () => {
 						/>
 					</>
 				);
-			
-			
+
 			// ============================
-			// 1. NAME
+			// 2. EMAIL
 			// ============================
 
 			case 2:
 				return (
-					<>						
-
+					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<h1 className="mt-5 text-2xl font-bold text-black sm:text-3xl">Email</h1>
 
 						<input
@@ -370,12 +489,17 @@ const Register = () => {
 				);
 
 			// ============================
-			// 2. DATE OF BIRTH
+			// 3. DATE OF BIRTH
 			// ============================
 
 			case 3:
 				return (
 					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Enter your date of birth?</h1>
 
 						<p className="mt-5 text-sm text-gray-700">This age will be seen by other users</p>
@@ -384,18 +508,24 @@ const Register = () => {
 							type="date"
 							value={formData.dateOfBirth}
 							onChange={(e) => updateField("dateOfBirth", e.target.value)}
+							max={new Date().toISOString().split("T")[0]}
 							className="mt-8 h-12.5 w-full max-w-90 rounded-xl border-none bg-[#F9E8EE] px-5 text-center text-gray-600 outline-none focus:ring-2 focus:ring-[#C43266]/30"
 						/>
 					</>
 				);
 
 			// ============================
-			// 3. GENDER
+			// 4. GENDER
 			// ============================
 
 			case 4:
 				return (
 					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Tell us your gender?</h1>
 
 						<p className="mt-4 max-w-md text-center text-sm text-gray-700">
@@ -416,12 +546,17 @@ const Register = () => {
 				);
 
 			// ============================
-			// 4. LOOKING FOR
+			// 5. LOOKING FOR
 			// ============================
 
 			case 5:
 				return (
 					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Who are you looking for?</h1>
 
 						<p className="mt-4 text-sm text-gray-700">
@@ -442,7 +577,7 @@ const Register = () => {
 				);
 
 			// ============================
-			// 5. GOAL
+			// 6. GOAL
 			// ============================
 
 			case 6:
@@ -469,7 +604,7 @@ const Register = () => {
 				);
 
 			// ============================
-			// 6. INTERESTS
+			// 7. INTERESTS
 			// ============================
 
 			case 7:
@@ -496,7 +631,7 @@ const Register = () => {
 				);
 
 			// ============================
-			// 7. HEIGHT
+			// 8. HEIGHT
 			// ============================
 
 			case 8:
@@ -515,7 +650,7 @@ const Register = () => {
 				);
 
 			// ============================
-			// 8. WEIGHT
+			// 9. WEIGHT
 			// ============================
 
 			case 9:
@@ -534,7 +669,7 @@ const Register = () => {
 				);
 
 			// ============================
-			// 9. BELIEF
+			// 10. BELIEF
 			// ============================
 
 			case 10:
@@ -560,10 +695,36 @@ const Register = () => {
 				);
 
 			// ============================
-			// 10. ORIENTATION
+			// 11. TRIBE
 			// ============================
 
 			case 11:
+				return (
+					<>
+						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your tribe?</h1>
+
+						<p className="mt-4 max-w-lg text-center text-sm text-gray-700">
+							Share your cultural background to help us create better connections.
+						</p>
+
+						<div className="mt-8 flex max-w-3xl flex-wrap justify-center gap-3">
+							{tribeOptions.map((option) => (
+								<OptionButton
+									key={option}
+									value={option}
+									selected={formData.tribe === option}
+									onClick={() => updateField("tribe", option)}
+								/>
+							))}
+						</div>
+					</>
+				);
+
+			// ============================
+			// 12. ORIENTATION
+			// ============================
+
+			case 12:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -588,10 +749,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 11. ZODIAC
+			// 13. ZODIAC
 			// ============================
 
-			case 12:
+			case 13:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Zodiac sign?</h1>
@@ -614,10 +775,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 12. EDUCATION
+			// 14. EDUCATION
 			// ============================
 
-			case 13:
+			case 14:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -640,10 +801,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 13. DRINKING
+			// 15. DRINKING
 			// ============================
 
-			case 14:
+			case 15:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you drink?</h1>
@@ -666,10 +827,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 14. SMOKING
+			// 16. SMOKING
 			// ============================
 
-			case 15:
+			case 16:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you smoke?</h1>
@@ -695,9 +856,14 @@ const Register = () => {
 			// 17. ADD PHOTO
 			// ============================
 
-			case 16:
+			case 17:
 				return (
 					<>
+						{isImportantStep && (
+							<span className="mb-3 inline-flex items-center rounded-full bg-[#F9E8EE] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#C43266]">
+								Important
+							</span>
+						)}
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Add a Photo</h1>
 
 						<p className="mt-4 max-w-lg text-center text-sm text-gray-700">
@@ -740,10 +906,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 16. MORE PHOTOS
+			// 18. MORE PHOTOS
 			// ============================
-
-			case 17:
+				
+			case 18:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Add more photos</h1>
@@ -796,10 +962,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 17. LOCATION
+			// 19. LOCATION
 			// ============================
 
-			case 18:
+			case 19:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Location</h1>
@@ -828,10 +994,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 18. MARITAL STATUS
+			// 20. MARITAL STATUS
 			// ============================
 
-			case 19:
+			case 20:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -856,10 +1022,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 19. KIDS
+			// 21. KIDS
 			// ============================
 
-			case 20:
+			case 21:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Do you have kids?</h1>
@@ -882,10 +1048,10 @@ const Register = () => {
 				);
 
 			// ============================
-			// 20. BIO
+			// 22. BIO
 			// ============================
 
-			case 21:
+			case 22:
 				return (
 					<>
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">
@@ -965,7 +1131,7 @@ const Register = () => {
 					{/* Next */}
 
 					<div className="flex gap-3">
-						{step > 1 && step < 20 && (
+						{step > 1 && step < totalSteps && (
 							<button
 								type="button"
 								onClick={handleSkip}
@@ -977,10 +1143,9 @@ const Register = () => {
 						<button
 							type="button"
 							onClick={handleNext}
-							className="rounded-xl bg-[#C43266] px-6 py-3 text-sm font-medium text-white transition hover:bg-linear-to-r
-          from-[#C43266]
-          to-[#652F7B]">
-							{step === totalSteps ? "Finish" : "Next"} →
+							disabled={creating}
+							className="rounded-xl bg-[#C43266] px-6 py-3 text-sm font-medium text-white transition hover:bg-linear-to-r from-[#C43266] to-[#652F7B] disabled:cursor-not-allowed disabled:opacity-70">
+							{creating ? "Creating..." : step === totalSteps ? "Finish" : "Next"} →
 						</button>
 					</div>
 				</div>
