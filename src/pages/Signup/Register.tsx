@@ -256,23 +256,7 @@ const Register = () => {
 		"Spiritual",
 		"Other",
 		"Prefer not to say",
-	];
-	const tribeOptions = [
-		"Yoruba",
-		"Igbo",
-		"Hausa",
-		"Ijaw",
-		"Ibibio",
-		"Efik",
-		"Kanuri",
-		"Tiv",
-		"Edo",
-		"Urhobo",
-		"Isoko",
-		"Fulani",
-		"Other",
-		"Prefer not to say",
-	];
+	];	
 
 	const orientationOptions = ["Straight", "Gay", "Lesbian", "Bisexual", "Asexual", "Other"];
 
@@ -701,22 +685,19 @@ const Register = () => {
 			case 11:
 				return (
 					<>
-						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your tribe?</h1>
+						<h1 className="text-2xl font-bold text-black sm:text-3xl">What's your Region?</h1>
 
 						<p className="mt-4 max-w-lg text-center text-sm text-gray-700">
 							Share your cultural background to help us create better connections.
 						</p>
 
-						<div className="mt-8 flex max-w-3xl flex-wrap justify-center gap-3">
-							{tribeOptions.map((option) => (
-								<OptionButton
-									key={option}
-									value={option}
-									selected={formData.tribe === option}
-									onClick={() => updateField("tribe", option)}
-								/>
-							))}
-						</div>
+						<input
+							type="text"
+							value={formData.tribe}
+							onChange={(e) => updateField("tribe", e.target.value)}
+							placeholder="Eg West arica, East Africa, North Africa, South Africa e.t.c"
+							className="mt-8 h-12.5 w-full max-w-90 rounded-xl border-none bg-[#F9E8EE] px-5 text-center outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#C43266]/30"
+						/>
 					</>
 				);
 

@@ -1,124 +1,152 @@
-import { useState } from "react";
-import { Header, FilterButton } from "../../components/Layout";
+import { useEffect, useMemo, useState } from "react";
+import { Header } from "../../components/Layout";
 import PersonCard from "../../components/PersonCard";
-import james from "../../assets/images/james.png";
-import monica from "../../assets/images/monica.png";
-import kelvin from "../../assets/images/kelvin.png";
-import peter from "../../assets/images/peter.png";
-import margret from "../../assets/images/margret.png";
-import cynthia from "../../assets/images/cynthia.png";
 import type { Person } from "../../types";
-import FilterPanel from "../../components/FilterPanel";
+import { getAllYourMatches, type ApiConnection } from "../../services/connectionService";
 
-const people: Person[] = [
-	{
-		id: 1,
-		name: "James Kruger",
-		age: 28,
-		image: james,
-		location: "West Carolina",
-		intent: "Friendship",
-	},
-	{
-		id: 2,
-		name: "Monica Cyprus",
-		age: 28,
-		image: monica,
-		location: "South American",
-		intent: "Casual Fun",
-		match: true,
-	},
-	{
-		id: 3,
-		name: "Kelvin Holad",
-		age: 29,
-		image: kelvin,
-		location: "North American",
-		intent: "Casual Fun",
-		likedYou: true,
-	},
-	{
-		id: 4,
-		name: "Peter Kuer",
-		age: 28,
-		image: peter,
-		location: "Mexico",
-		intent: "Friendship",
-	},
-	{
-		id: 5,
-		name: "Margret Hills",
-		age: 31,
-		image: margret,
-		location: "Canada",
-		intent: "Casual Fun",
-		match: true,
-	},
-	{
-		id: 6,
-		name: "Cynthia Fish",
-		age: 29,
-		image: cynthia,
-		location: "West Virginia",
-		intent: "Casual Fun",
-		match: true,
-	},
-];
+function calculateAge(dob: string | null) {
+	if (!dob) return 0;
 
-export default function Connections() {
-	const [tab, setTab] = useState("All");
+	const birthDate = new Date(dob);
+	const today = new Date();
 
-	const tabs = ["All", "You like", "Like you", "Match"];
-	const [filtersOpen, setFiltersOpen] = useState(false);
+	let age = today.getFullYear() - birthDate.getFullYear();
+
+	const monthDifference = today.getMonth() - birthDate.getMonth();
+
+	if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+		age--;
+	}
+
+	return age;
+}
+
+function getProfileImage(user: ApiConnection) {
+	if (user.profilepicture) {
+		return user.profilepicture;
+	}
+
+	if (user.images) {
+		try {
+			const images = JSON.parse(user.images);
+
+			if (Array.isArray(images) && images.length > 0) {
+				return images[0];
+			}
+		} catch {
+			// Invalid images JSON
+		}
+	}
+
+	return "";
+}
+
+function mapConnectionToPerson(user: ApiConnection): Person {
+	return {
+		id: user.id,
+		name: user.name,
+		age: calculateAge(user.dob),
+		image: getProfileImage(user),
+		location: [user.state, user.country].filter(Boolean).join(", "),
+		intent: user.goal || "",
+	};
+}
+
+export default function Connections() {	
+
+	const [connections, setConnections] = useState<ApiConnection[]>([]);
+
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
 	
-		const handleFilters = (filters: Record<string, unknown>) => {
-			console.log("Applied filters:", filters);
+
+	useEffect(() => {
+		const loadConnections = async () => {
+			try {
+				setLoading(true);
+				setError("");
+
+				const data = await getAllYourMatches();
+
+				setConnections(data);
+			} catch (err) {
+				console.error("Connections error:", err);
+
+				setError(err instanceof Error ? err.message : "Unable to load connections.");
+			} finally {
+				setLoading(false);
+			}
 		};
-			
+
+		loadConnections();
+	}, []);
+
+	const filteredPeople = useMemo(() => {
+		/*
+		 * /allyourmatch currently gives us the connection list.
+		 *
+		 * It does NOT give us enough information to distinguish:
+		 * - You like
+		 * - Like you
+		 * - Match
+		 *
+		 * so for now all four tabs use the returned connections.
+		 *
+		 * Once the API provides those relationship fields,
+		 * we can filter them here.
+		 */
+
+		return connections.map(mapConnectionToPerson);
+	}, [connections]);
+	
 
 	return (
 		<>
 			<Header />
 
 			<section className="px-5 pb-24 pt-10 md:px-8 lg:px-10">
+				{/* Header */}
 				<div className="flex flex-wrap items-end justify-between gap-5">
 					<div>
 						<h1 className="text-3xl font-bold text-[#67307d]">Connections</h1>
 
 						<p className="mt-2 font-medium text-gray-700">People who are interested in you</p>
 					</div>
+					
+				</div>
 
-					<div className="flex items-center gap-5">
-						<div className="flex overflow-hidden rounded-full bg-white">
-							{tabs.map((item) => (
-								<button
-									key={item}
-									onClick={() => setTab(item)}
-									className={`px-6 py-3 text-sm ${
-										tab === item
-											? "rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white"
-											: ""
-									}`}>
-									{item}
-								</button>
-							))}
-						</div>
-
-						<FilterButton onClick={() => setFiltersOpen(true)} />
+				{/* Loading */}
+				{loading && (
+					<div className="mt-16 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+						{[1, 2, 3].map((item) => (
+							<div key={item} className="h-107.5 animate-pulse rounded-[26px] bg-white" />
+						))}
 					</div>
-				</div>
+				)}
 
-				<div className="mt-16 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
-					{people.map((person) => (
-						<PersonCard key={person.id} person={person} />
-					))}
-				</div>
+				{/* Error */}
+				{!loading && error && (
+					<div className="mt-16 rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">{error}</div>
+				)}
 
-				<FilterPanel
-					isOpen={filtersOpen}
-					onClose={() => setFiltersOpen(false)}
-					onApply={handleFilters}
-				/>
+				{/* Empty */}
+				{!loading && !error && filteredPeople.length === 0 && (
+					<div className="mt-16 rounded-2xl bg-white px-5 py-12 text-center">
+						<h2 className="text-lg font-semibold text-gray-800">No connections yet</h2>
+
+						<p className="mt-2 text-sm text-gray-500">Your connections will appear here.</p>
+					</div>
+				)}
+
+				{/* People */}
+				{!loading && !error && filteredPeople.length > 0 && (
+					<div className="mt-16 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+						{filteredPeople.map((person) => (
+							<PersonCard key={person.id} person={person} />
+						))}
+					</div>
+				)}
+				
 			</section>
 		</>
 	);

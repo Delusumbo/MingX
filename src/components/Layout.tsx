@@ -1,24 +1,15 @@
-import {
-	Bell,		
-	Heart,
-	Home,
-	Menu,
-	MessageCircle,
-	Search,
-	Sparkles,
-	User,
-	Users,	
-} from "lucide-react";
+import { Bell, Heart, Home, MessageCircle, Search, Sparkles, User, Users, X } from "lucide-react";
 import { Icon } from "@iconify/react";
 import NotificationPanel from "./NotificationPanel";
 import Logo from "../assets/images/Mingx.png";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-
 import { useState } from "react";
+import { LayoutProvider, useLayout } from "./LayoutContext";
 
 type HeaderProps = {
 	onSearch?: (value: string) => void;
 	searchPlaceholder?: string;
+	onMenuClick?: () => void;
 };
 
 const storedUser = localStorage.getItem("user");
@@ -85,11 +76,11 @@ export function Header({ onSearch, searchPlaceholder = "Search" }: HeaderProps) 
 	const [search, setSearch] = useState("");
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+	const { openMobileMenu } = useLayout();
+
 	const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const value = event.target.value;
-
 		setSearch(value);
-
 		onSearch?.(value);
 	};
 
@@ -97,46 +88,40 @@ export function Header({ onSearch, searchPlaceholder = "Search" }: HeaderProps) 
 		<>
 			<header className="sticky top-0 z-30 flex h-19 items-center justify-between border-b border-gray-100 bg-[#faf7f8]/95 px-5 backdrop-blur md:px-8 lg:px-10">
 				{/* Mobile menu */}
-
-				<button className="mr-4 rounded-lg p-2 text-gray-600 lg:hidden" aria-label="Open menu">
-					<Menu size={24} />
+				<button
+					type="button"
+					onClick={openMobileMenu}
+					className="mr-4 rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 lg:hidden"
+					aria-label="Open menu">
+					<Icon icon="solar:hamburger-menu-linear" width="24" height="24" />
 				</button>
 
 				{/* Search */}
-
 				<div className="relative max-w-125 flex-1">
-					<Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+					<Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
 
 					<input
 						type="text"
 						value={search}
 						onChange={handleSearch}
 						placeholder={searchPlaceholder}
-						className="h-11 w-full rounded-full border border-gray-200 bg-white pl-11 pr-5 text-sm outline-none transition placeholder:text-gray-400 focus:border-[#ca2e6b] focus:ring-2 focus:ring-[#ca2e6b]/10"
+						className="h-12 w-full rounded-2xl border-none bg-white pl-12 pr-5 text-sm outline-none"
 					/>
 				</div>
 
-				{/* Right side */}
+				{/* Notification */}
+				<button
+					type="button"
+					onClick={() => setNotificationsOpen(true)}
+					className="relative ml-4 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white">
+					<Bell size={19} />
 
-				<div className="ml-4 flex items-center gap-3">
-					<button
-						type="button"
-						onClick={() => setNotificationsOpen(true)}
-						className="relative hidden h-10 w-10 place-items-center rounded-full bg-white text-gray-600 shadow-sm sm:grid">
-						<Bell size={19} />
-
-						<span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#ca2e6b]" />
-					</button>
-
-					<Link to="/profile" className="flex items-center gap-2">
-						<div className="grid h-10 w-10 place-items-center rounded-full bg-linear-to-br from-[#ca2e6b] to-[#67307d] text-white">
-							<User size={19} />
-						</div>
-
-						<span className="hidden text-sm font-semibold text-gray-700 md:block">Profile</span>
-					</Link>
-				</div>
+					<span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-[#67307d]">
+						1
+					</span>
+				</button>
 			</header>
+
 			<NotificationPanel isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
 		</>
 	);
@@ -150,8 +135,6 @@ export function FilterButton({ onClick }: { onClick: () => void }) {
 			className="rounded-full border border-[#ca2e6b] bg-white px-6 py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 			Filters
 		</button>
-
-		
 	);
 }
 
@@ -221,6 +204,119 @@ function Sidebar() {
 		</aside>
 	);
 }
+function MobileSidebar() {
+	const { mobileMenuOpen, closeMobileMenu } = useLayout();
+
+	if (!mobileMenuOpen) return null;
+
+	const navigation = [
+		{
+			name: "Discover",
+			path: "/discover",
+			icon: <Home size={19} />,
+		},
+		{
+			name: "Connections",
+			path: "/connections",
+			icon: <Heart size={19} />,
+		},
+		{
+			name: "Messages",
+			path: "/message",
+			icon: <MessageCircle size={19} />,
+		},
+		{
+			name: "Communities",
+			path: "/communities",
+			icon: <Users size={19} />,
+		},
+	];
+
+	return (
+		<>
+			{/* Overlay */}
+			<button
+				type="button"
+				aria-label="Close menu"
+				onClick={closeMobileMenu}
+				className="fixed inset-0 z-50 bg-black/40 lg:hidden"
+			/>
+
+			{/* Drawer */}
+			<aside className="fixed inset-y-0 left-0 z-60 flex w-70 flex-col overflow-y-auto bg-white px-5 py-7 shadow-2xl lg:hidden">
+				{/* Header */}
+				<div className="mb-8 flex items-center justify-between">
+					<Link to="/discover" onClick={closeMobileMenu}>
+						<img src={Logo} alt="MingX" className="h-auto w-24" />
+					</Link>
+
+					<button
+						type="button"
+						onClick={closeMobileMenu}
+						className="grid h-9 w-9 place-items-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200"
+						aria-label="Close menu">
+						<X size={18} />
+					</button>
+				</div>
+
+				{/* Navigation */}
+				<nav className="space-y-2">
+					{navigation.map((item) => (
+						<NavLink
+							key={item.path}
+							to={item.path}
+							onClick={closeMobileMenu}
+							className={({ isActive }) =>
+								`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+									isActive
+										? "bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white"
+										: "text-gray-600 hover:bg-gray-50 hover:text-[#67307d]"
+								}`
+							}>
+							{item.icon}
+							<span>{item.name}</span>
+						</NavLink>
+					))}
+				</nav>
+
+				{/* Account */}
+				<div className="mt-8 border-t border-gray-100 pt-6">
+					<p className="mb-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+						Account
+					</p>
+
+					<NavLink
+						to="/profile"
+						onClick={closeMobileMenu}
+						className={({ isActive }) =>
+							`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+								isActive
+									? "bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white"
+									: "text-gray-600 hover:bg-gray-50 hover:text-[#67307d]"
+							}`
+						}>
+						<User size={19} />
+						<span>Profile</span>
+					</NavLink>
+
+					<NavLink
+						to="/premium"
+						onClick={closeMobileMenu}
+						className={({ isActive }) =>
+							`mt-2 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+								isActive
+									? "bg-linear-to-r from-[#ca2e6b] to-[#67307d] text-white"
+									: "text-gray-600 hover:bg-gray-50 hover:text-[#67307d]"
+							}`
+						}>
+						<Sparkles size={19} />
+						<span>Premium</span>
+					</NavLink>
+				</div>
+			</aside>
+		</>
+	);
+}
 
 function MobileNavigation() {
 	return (
@@ -238,12 +334,12 @@ function MobileNavigation() {
 						icon: Heart,
 					},
 					{
-						name: "Matches",
-						path: "/matches",
+						name: "Messages",
+						path: "/message",
 						icon: MessageCircle,
 					},
 					{
-						name: "Groups",
+						name: "Communities",
 						path: "/communities",
 						icon: Users,
 					},
@@ -279,16 +375,24 @@ export default function Layout() {
 	const location = useLocation();
 
 	return (
-		<div className="min-h-screen bg-[#faf7f8]">
-			<Sidebar />
+		<LayoutProvider>
+			<div className="min-h-screen bg-[#faf7f8]">
+				{/* Desktop sidebar */}
+				<Sidebar />
 
-			<main className="min-h-screen lg:ml-61.25">
-				<div key={location.pathname}>
-					<Outlet />
-				</div>
-			</main>
+				{/* Mobile sidebar */}
+				<MobileSidebar />
 
-			<MobileNavigation />
-		</div>
+				{/* Main content */}
+				<main className="min-h-screen lg:ml-61.25 pb-20 lg:pb-0">
+					<div key={location.pathname}>
+						<Outlet />
+					</div>
+				</main>
+
+				{/* Mobile bottom navigation */}
+				<MobileNavigation />
+			</div>
+		</LayoutProvider>
 	);
 }
