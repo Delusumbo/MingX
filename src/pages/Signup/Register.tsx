@@ -174,6 +174,11 @@ const Register = () => {
 		}));
 	}, [formData.photos]);
 
+	const profilePicturePreview = useMemo(
+		() => (formData.profilePicture ? URL.createObjectURL(formData.profilePicture) : null),
+		[formData.profilePicture],
+	);
+
 	useEffect(() => {
 		return () => {
 			photoPreviews.forEach((photo) => {
@@ -181,6 +186,14 @@ const Register = () => {
 			});
 		};
 	}, [photoPreviews]);
+
+	useEffect(() => {
+		return () => {
+			if (profilePicturePreview) {
+				URL.revokeObjectURL(profilePicturePreview);
+			}
+		};
+	}, [profilePicturePreview]);
 
 	const handlePhotos = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const files = Array.from(event.target.files || []);
@@ -257,6 +270,19 @@ const Register = () => {
 		"Other",
 		"Prefer not to say",
 	];	
+
+	const regionOptions = [
+		"West Africa",
+		"East Africa",
+		"North Africa",
+		"South Africa",
+		"Central Africa",
+		"Asia",
+		"Europe",
+		"North America",
+		"South America",
+		"Oceania",
+	];
 
 	const orientationOptions = ["Straight", "Gay", "Lesbian", "Bisexual", "Asexual", "Other"];
 
@@ -691,13 +717,16 @@ const Register = () => {
 							Share your cultural background to help us create better connections.
 						</p>
 
-						<input
-							type="text"
-							value={formData.tribe}
-							onChange={(e) => updateField("tribe", e.target.value)}
-							placeholder="Eg West arica, East Africa, North Africa, South Africa e.t.c"
-							className="mt-8 h-12.5 w-full max-w-90 rounded-xl border-none bg-[#F9E8EE] px-5 text-center outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#C43266]/30"
-						/>
+						<div className="mt-8 flex max-w-2xl flex-wrap justify-center gap-3">
+							{regionOptions.map((option) => (
+								<OptionButton
+									key={option}
+									value={option}
+									selected={formData.tribe === option}
+									onClick={() => updateField("tribe", option)}
+								/>
+							))}
+						</div>
 					</>
 				);
 
@@ -854,10 +883,10 @@ const Register = () => {
 
 						<div className="mt-8 flex flex-wrap justify-center gap-4">
 							{/* Show uploaded image */}
-							{photoPreviews.length > 0 ? (
+							{profilePicturePreview ? (
 								<div className="relative">
 									<img
-										src={photoPreviews[0].url}
+										src={profilePicturePreview}
 										alt="Profile preview"
 										className="h-40 w-40 rounded-2xl object-cover shadow-md"
 									/>
@@ -871,16 +900,26 @@ const Register = () => {
 									<span className="text-3xl">📷</span>
 									<span className="mt-2">Upload</span>
 
-									<input type="file" accept="image/*" onChange={handleProfilePicture} />
+									<input
+										type="file"
+										accept="image/*"
+										className="hidden"
+										onChange={handleProfilePicture}
+									/>
 								</label>
 							)}
 						</div>
 
 						{/* Upload another / change photo */}
-						{photoPreviews.length > 0 && (
+						{profilePicturePreview && (
 							<label className="mt-4 cursor-pointer rounded-xl border border-[#C43266] px-5 py-2.5 text-sm text-[#C43266] transition hover:bg-[#F9E8EE]">
 								Change photo
-								<input type="file" accept="image/*" className="hidden" onChange={handlePhotos} />
+								<input
+									type="file"
+									accept="image/*"
+									className="hidden"
+									onChange={handleProfilePicture}
+								/>
 							</label>
 						)}
 					</>

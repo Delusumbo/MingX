@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import { Icon } from "@iconify/react";
-import { ArrowLeft, Heart, MessageCircle, Send, Trash2, X } from "lucide-react";
+import { ArrowLeft, FileText, Heart, ImagePlus, MessageCircle, Send, Trash2, X } from "lucide-react";
 import Header from "../../components/Header";
 import {
 	addComment,
@@ -260,6 +260,7 @@ export default function Share() {
 	const [selectedPostId, setSelectedPostId] = useState<string | number | null>(null);
 	const [content, setContent] = useState("");
 	const [file, setFile] = useState<File | null>(null);
+	const [isFileDragActive, setIsFileDragActive] = useState(false);
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
 	const [commentDraft, setCommentDraft] = useState("");
 	const [replyDraft, setReplyDraft] = useState("");
@@ -272,10 +273,32 @@ export default function Share() {
 	const [toast, setToast] = useState<Toast | null>(null);
 
 	const selectedPost = posts.find((post) => String(post.id) === String(selectedPostId)) ?? null;
+	const filePreview = useMemo(
+		() => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null),
+		[file],
+	);
 	const showToast = useCallback(
 		(message: string, kind: Toast["kind"]) => setToast({ message, kind }),
 		[],
 	);
+
+	useEffect(() => {
+		return () => {
+			if (filePreview) URL.revokeObjectURL(filePreview);
+		};
+	}, [filePreview]);
+
+	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+		setFile(event.currentTarget.files?.[0] ?? null);
+		event.currentTarget.value = "";
+	};
+
+	const handleFileDrop = (event: DragEvent<HTMLDivElement>) => {
+		event.preventDefault();
+		setIsFileDragActive(false);
+		const droppedFile = event.dataTransfer.files[0];
+		if (droppedFile) setFile(droppedFile);
+	};
 
 	const loadPosts = useCallback(async () => {
 		setLoading(true);
@@ -731,14 +754,14 @@ export default function Share() {
 													aria-pressed={isSelected}
 													className={`flex h-10 items-center justify-center gap-2 rounded-xl border-2 px-4 text-sm font-medium transition-all ${
 														isSelected
-															? "border-[#67307d] text-[#67307d]"
+															? "bg-[#67307d] text-white hover:bg-[#542566]"
 															: "border-[#ca2e6b] text-gray-500 hover:border-[#67307d]"
 													}`}>
 													<Icon
 														icon={option.icon}
 														width="18"
 														height="18"
-														className="text-[#67307d]"
+														className={`${isSelected ? "text-white" : "text-[#ca2e6b]"}`}
 													/>
 													<span>{option.label}</span>
 												</button>
@@ -757,15 +780,88 @@ export default function Share() {
 									aria-label="Post text"
 									className="mt-6 h-46 w-full resize-y rounded-[18px] border-none bg-[#fcf5f8] px-5 py-5 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#ca2e6b]/20"
 								/>
-								<label className="mt-5 block text-sm font-medium text-gray-700">
-									Post image or file <span className="text-[#ca2e6b]">*</span>
-									<input
-										type="file"
-										required
-										onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-										className="mt-2 block w-full rounded-xl border border-gray-200 bg-white p-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[#f9e8ef] file:px-4 file:py-2 file:font-semibold file:text-[#67307d]"
-									/>
-								</label>
+								<div className="mt-5">
+									<p className="mb-2 text-sm font-medium text-gray-700">
+										Post image or file <span className="text-[#ca2e6b]">*</span>
+									</p>
+									<div
+										onDragEnter={(event) => {
+											event.preventDefault();
+											setIsFileDragActive(true);
+										}}
+										onDragOver={(event) => event.preventDefault()}
+										onDragLeave={(event) => {
+											if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+												setIsFileDragActive(false);
+											}
+										}}
+										onDrop={handleFileDrop}
+										className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition ${
+											isFileDragActive
+												? "border-[#ca2e6b] bg-[#fcf0f5]"
+												: "border-[#ead8e5] bg-[#fcf8fb] hover:border-[#b895c4]"
+										}`}>
+										<input
+											id="post-file-upload"
+											type="file"
+											required={!file}
+											onChange={handleFileChange}
+											className="sr-only"
+										/>
+										{file ? (
+											<div className="flex flex-col items-center gap-4 p-5 sm:flex-row">
+												{filePreview ? (
+													<img
+														src={filePreview}
+														alt={`Preview of ${file.name}`}
+														className="h-36 w-full rounded-xl object-cover sm:h-28 sm:w-36"
+													/>
+												) : (
+													<div className="grid h-28 w-full shrink-0 place-items-center rounded-xl bg-[#f4eaf3] text-[#67307d] sm:w-36">
+														<FileText size={34} />
+													</div>
+												)}
+												<div className="min-w-0 flex-1 text-center sm:text-left">
+													<p className="truncate text-sm font-semibold text-gray-800">
+														{file.name}
+													</p>
+													<p className="mt-1 text-xs text-gray-500">
+														{(file.size / (1024 * 1024)).toFixed(2)} MB
+													</p>
+													<label
+														htmlFor="post-file-upload"
+														className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#ead8e5] bg-white px-3 py-2 text-xs font-semibold text-[#67307d] transition hover:border-[#67307d]">
+														<ImagePlus size={15} />
+														Replace file
+													</label>
+												</div>
+												<button
+													type="button"
+													onClick={() => setFile(null)}
+													aria-label="Remove attached file"
+													className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white text-gray-500 shadow-sm transition hover:text-red-600">
+													<X size={16} />
+												</button>
+											</div>
+										) : (
+											<div className="flex flex-col items-center px-5 py-8 text-center">
+												<div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-[#f4eaf3] text-[#67307d]">
+													<ImagePlus size={23} />
+												</div>
+												<p className="text-sm font-semibold text-gray-800">
+													Drag and drop an image or file here
+												</p>
+												<p className="mt-1 text-xs text-gray-500">or</p>
+												<label
+													htmlFor="post-file-upload"
+													className="mt-3 cursor-pointer rounded-lg bg-[#67307d] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#542566]">
+													Browse files
+												</label>
+												<p className="mt-3 text-xs text-gray-400">One file per post</p>
+											</div>
+										)}
+									</div>
+								</div>
 								<div className="mt-5 flex justify-end">
 									<button
 										type="submit"

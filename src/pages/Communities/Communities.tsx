@@ -40,6 +40,7 @@ type CommunityMessage = {
 	file?: string | null;
 	attachment?: string | null;
 	created_at?: string;
+	sender_name?: unknown;
 	user?: {
 		id?: number;
 		name?: string;
@@ -340,6 +341,7 @@ export default function Communities() {
 			setLoadingMessages(true);
 
 			const data = await getCommunityMessages(communityId);
+			console.log("Community messages response:", data);
 
 			let messageList: unknown[] = [];
 
@@ -755,8 +757,9 @@ export default function Communities() {
 							) : (
 								messages.map((message, index) => {
 									const senderName =
-										message.user?.name ||
+										(typeof message.sender_name === "string" && message.sender_name.trim()) ||
 										[message.user?.firstname, message.user?.lastname].filter(Boolean).join(" ") ||
+										message.user?.name ||
 										"Community member";
 
 									const messageBody = message.message_text || message.message || "";
