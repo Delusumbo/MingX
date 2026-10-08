@@ -12,6 +12,7 @@ import {
 	likePost as likePostRequest,
 	unlikePost as unlikePostRequest,
 } from "../../services/postService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 type PostComment = {
 	id: string | number;
@@ -29,6 +30,7 @@ type Post = {
 	category: string | null;
 	createdAt: string;
 	file: string | null;
+	fileIsVideo: boolean;
 	likes: number;
 	likedByYou: boolean;
 	comments: PostComment[];
@@ -199,9 +201,20 @@ function normalizePost(value: unknown, previousPost?: Post): Post {
 						);
 					})
 				: (previousPost?.likedByYou ?? false);
-	const image = firstValue(record, "file_url", "file", "image", "image_url");
+	const image = firstValue(
+		record,
+		"file_url",
+		"file",
+		"image",
+		"image_url",
+		"video_url",
+		"media_url",
+	);
 	const fileUrl =
 		textValue(image) || textValue(firstValue(asRecord(image) ?? {}, "url", "path", "file_url"));
+	const mediaType = textValue(
+		firstValue(record, "mime_type", "file_type", "media_type", "content_type"),
+	);
 	const rawComments = firstValue(record, "comments");
 	const rawCommentCount = firstValue(
 		record,
@@ -230,6 +243,7 @@ function normalizePost(value: unknown, previousPost?: Post): Post {
 		category: textValue(firstValue(record, "Thought", "thought", "category")) || null,
 		createdAt: textValue(firstValue(record, "created_at", "createdAt"), new Date().toISOString()),
 		file: fileUrl || null,
+		fileIsVideo: fileUrl ? isVideoMedia(fileUrl, mediaType) : false,
 		likes: Number.isFinite(likeCount) ? likeCount : 0,
 		likedByYou,
 		comments: normalizeComments(rawComments ?? []),
@@ -248,6 +262,40 @@ function formatPostDate(date: string) {
 		dateStyle: "medium",
 		timeStyle: "short",
 	}).format(parsedDate);
+}
+
+function isVideoMedia(file: string | File, mediaType?: string): boolean {
+	const declaredType = mediaType || (file instanceof File ? file.type : "");
+	return (
+		declaredType.toLowerCase().startsWith("video/") ||
+		declaredType.toLowerCase() === "video" ||
+		/\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:$|[?#])/i.test(
+			file instanceof File ? file.name : file,
+		)
+	);
+}
+
+function PostMedia({
+	src,
+	isVideo,
+	className,
+}: {
+	src: string;
+	isVideo: boolean;
+	className: string;
+}) {
+	return isVideo ? (
+		<video
+			src={src}
+			controls
+			playsInline
+			preload="metadata"
+			aria-label="Post video"
+			className={className}
+		/>
+	) : (
+		<img src={src} alt="" className={className} />
+	);
 }
 
 function countComments(comments: PostComment[]): number {
@@ -273,10 +321,10 @@ export default function Share() {
 	const [toast, setToast] = useState<Toast | null>(null);
 
 	const selectedPost = posts.find((post) => String(post.id) === String(selectedPostId)) ?? null;
-	const filePreview = useMemo(
-		() => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null),
-		[file],
-	);
+	const filePreview = useMemo(() => {
+		if (!file || (!file.type.startsWith("image/") && !isVideoMedia(file))) return null;
+		return URL.createObjectURL(file);
+	}, [file]);
 	const showToast = useCallback(
 		(message: string, kind: Toast["kind"]) => setToast({ message, kind }),
 		[],
@@ -336,10 +384,14 @@ export default function Share() {
 				);
 			}
 			if (failedCount) {
-				showToast("Unable to load comment counts for some posts.", "error");
+				const failedResult = commentResults.find((result) => result.status === "rejected");
+				showToast(
+					getApiMessage(failedResult?.status === "rejected" ? failedResult.reason : null),
+					"error",
+				);
 			}
 		} catch (loadError) {
-			setError(loadError instanceof Error ? loadError.message : "Unable to load posts.");
+			setError(getApiMessage(loadError));
 		} finally {
 			setLoading(false);
 		}
@@ -392,10 +444,7 @@ export default function Share() {
 				...currentPosts.filter((currentPost) => String(currentPost.id) !== String(post.id)),
 			]);
 		} catch (loadError) {
-			showToast(
-				loadError instanceof Error ? loadError.message : "Unable to load this post.",
-				"error",
-			);
+			showToast(getApiMessage(loadError), "error");
 		} finally {
 			setDetailLoading(false);
 		}
@@ -409,19 +458,16 @@ export default function Share() {
 
 		setSaving(true);
 		try {
-			await addPost(selectedOption, trimmedContent, file);
+			const response = await addPost(selectedOption, trimmedContent, file);
 			setContent("");
 			setFile(null);
 			form.reset();
 			setSelectedOption(null);
 			setSection("posts");
 			await loadPosts();
-			showToast("Post created.", "success");
+			showToast(getApiMessage(response, "Request completed."), "success");
 		} catch (submitError) {
-			showToast(
-				submitError instanceof Error ? submitError.message : "Unable to create post.",
-				"error",
-			);
+			showToast(getApiMessage(submitError), "error");
 		} finally {
 			setSaving(false);
 		}
@@ -432,17 +478,14 @@ export default function Share() {
 
 		setBusyPostId(post.id);
 		try {
-			await deletePostRequest(post.id);
+			const response = await deletePostRequest(post.id);
 			setPosts((currentPosts) =>
 				currentPosts.filter((currentPost) => String(currentPost.id) !== String(post.id)),
 			);
 			if (String(selectedPostId) === String(post.id)) setSelectedPostId(null);
-			showToast("Post deleted.", "success");
+			showToast(getApiMessage(response, "Request completed."), "success");
 		} catch (deleteError) {
-			showToast(
-				deleteError instanceof Error ? deleteError.message : "Unable to delete post.",
-				"error",
-			);
+			showToast(getApiMessage(deleteError), "error");
 		} finally {
 			setBusyPostId(null);
 		}
@@ -451,19 +494,17 @@ export default function Share() {
 	const handleLike = async (post: Post) => {
 		setBusyPostId(post.id);
 		try {
-			if (post.likedByYou) {
-				await unlikePostRequest(post.id);
-			} else {
-				await likePostRequest(post.id);
-			}
+			const response = post.likedByYou
+				? await unlikePostRequest(post.id)
+				: await likePostRequest(post.id);
 			updatePost(post.id, (currentPost) => ({
 				...currentPost,
 				likedByYou: !currentPost.likedByYou,
 				likes: Math.max(0, currentPost.likes + (currentPost.likedByYou ? -1 : 1)),
 			}));
-			showToast(post.likedByYou ? "Like removed." : "Post liked.", "success");
+			showToast(getApiMessage(response, "Request completed."), "success");
 		} catch (likeError) {
-			showToast(likeError instanceof Error ? likeError.message : "Unable to update like.", "error");
+			showToast(getApiMessage(likeError), "error");
 		} finally {
 			setBusyPostId(null);
 		}
@@ -475,28 +516,21 @@ export default function Share() {
 		if (!selectedPost || !trimmedContent) return;
 
 		setBusyPostId(selectedPost.id);
+		let response: unknown;
 		try {
-			await addComment(selectedPost.id, trimmedContent);
+			response = await addComment(selectedPost.id, trimmedContent);
 			setCommentDraft("");
 		} catch (commentError) {
-			showToast(
-				commentError instanceof Error ? commentError.message : "Unable to add comment.",
-				"error",
-			);
+			showToast(getApiMessage(commentError), "error");
 			setBusyPostId(null);
 			return;
 		}
 
 		try {
 			await refreshComments(selectedPost.id);
-			showToast("Comment added.", "success");
+			showToast(getApiMessage(response, "Request completed."), "success");
 		} catch (refreshError) {
-			showToast(
-				refreshError instanceof Error
-					? `Comment posted, but comments could not be refreshed: ${refreshError.message}`
-					: "Comment posted, but comments could not be refreshed.",
-				"error",
-			);
+			showToast(getApiMessage(refreshError), "error");
 		} finally {
 			setBusyPostId(null);
 		}
@@ -508,26 +542,22 @@ export default function Share() {
 		if (!selectedPost || !trimmedContent) return;
 
 		setBusyPostId(selectedPost.id);
+		let response: unknown;
 		try {
-			await addComment(selectedPost.id, trimmedContent, commentId);
+			response = await addComment(selectedPost.id, trimmedContent, commentId);
 			setReplyDraft("");
 			setReplyingTo(null);
 		} catch (replyError) {
-			showToast(replyError instanceof Error ? replyError.message : "Unable to add reply.", "error");
+			showToast(getApiMessage(replyError), "error");
 			setBusyPostId(null);
 			return;
 		}
 
 		try {
 			await refreshComments(selectedPost.id);
-			showToast("Reply added.", "success");
+			showToast(getApiMessage(response, "Request completed."), "success");
 		} catch (refreshError) {
-			showToast(
-				refreshError instanceof Error
-					? `Reply posted, but comments could not be refreshed: ${refreshError.message}`
-					: "Reply posted, but comments could not be refreshed.",
-				"error",
-			);
+			showToast(getApiMessage(refreshError), "error");
 		} finally {
 			setBusyPostId(null);
 		}
@@ -640,9 +670,9 @@ export default function Share() {
 										busy={String(busyPostId) === String(selectedPost.id)}
 									/>
 									{selectedPost.file && (
-										<img
+										<PostMedia
 											src={selectedPost.file}
-											alt=""
+											isVideo={selectedPost.fileIsVideo}
 											className="mt-5 max-h-120 w-full rounded-xl object-cover"
 										/>
 									)}
@@ -811,9 +841,9 @@ export default function Share() {
 										{file ? (
 											<div className="flex flex-col items-center gap-4 p-5 sm:flex-row">
 												{filePreview ? (
-													<img
+													<PostMedia
 														src={filePreview}
-														alt={`Preview of ${file.name}`}
+														isVideo={isVideoMedia(file)}
 														className="h-36 w-full rounded-xl object-cover sm:h-28 sm:w-36"
 													/>
 												) : (
@@ -910,9 +940,9 @@ export default function Share() {
 											busy={String(busyPostId) === String(post.id)}
 										/>
 										{post.file && (
-											<img
+											<PostMedia
 												src={post.file}
-												alt=""
+												isVideo={post.fileIsVideo}
 												className="mt-5 max-h-120 w-full rounded-xl object-cover"
 											/>
 										)}

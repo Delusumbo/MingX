@@ -2,17 +2,29 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Header, FilterButton } from "../../components/Layout";
 import PersonCard from "../../components/PersonCard";
-import FilterPanel from "../../components/FilterPanel";
+import FilterPanel, { type DiscoverFilters } from "../../components/FilterPanel";
 
 import type { Person } from "../../types";
 
-import { getPeople } from "../../services/discoverService";
+import { getPeople, type ApiPerson } from "../../services/discoverService";
 import { getLikedUsers } from "../../services/likedService";
+import { getApiMessage } from "../../utils/apiMessages";
 
+type Coordinates = { latitude: number; longitude: number };
+type DiscoverPerson = Person & {
+	gender: string;
+	goal: string;
+	lookingFor: string;
+	belief: string;
+	education: string;
+	maritalStatus: string;
+	interests: string[];
+	coordinates: Coordinates | null;
+};
 
-
-function calculateAge(dob: string) {
+function calculateAge(dob: string): number {
 	const birthDate = new Date(dob);
+	if (Number.isNaN(birthDate.getTime())) return 0;
 	const today = new Date();
 
 	let age = today.getFullYear() - birthDate.getFullYear();
@@ -26,15 +38,74 @@ function calculateAge(dob: string) {
 	return age;
 }
 
-console.log(localStorage.getItem('user'))
+function getCoordinates(value: unknown): Coordinates | null {
+	if (typeof value !== "object" || value === null) return null;
+	const record = value as Record<string, unknown>;
+	const latitude = Number(record.latitude ?? record.lat);
+	const longitude = Number(record.longitude ?? record.lng ?? record.lon);
+
+	return Number.isFinite(latitude) &&
+		Number.isFinite(longitude) &&
+		latitude >= -90 &&
+		latitude <= 90 &&
+		longitude >= -180 &&
+		longitude <= 180
+		? { latitude, longitude }
+		: null;
+}
+
+function parseStringList(value: string | null | undefined): string[] {
+	if (!value) return [];
+	try {
+		const parsed: unknown = JSON.parse(value);
+		if (Array.isArray(parsed)) return parsed.filter((item): item is string => typeof item === "string");
+	} catch {
+		// List values may also be stored as comma-separated strings.
+	}
+	return value.split(",").map((interest) => interest.trim()).filter(Boolean);
+}
+
+function matches(value: string, filter: string): boolean {
+	const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, "");
+	const normalizedFilter = filter.toLowerCase().replace(/[^a-z0-9]/g, "");
+	return (
+		normalizedValue.length > 0 &&
+		normalizedFilter.length > 0 &&
+		(normalizedValue === normalizedFilter ||
+			normalizedValue.includes(normalizedFilter) ||
+			normalizedFilter.includes(normalizedValue))
+	);
+}
+
+function distanceInKilometers(from: Coordinates, to: Coordinates): number {
+	const radians = (degrees: number) => (degrees * Math.PI) / 180;
+	const latitudeDifference = radians(to.latitude - from.latitude);
+	const longitudeDifference = radians(to.longitude - from.longitude);
+	const arc =
+		Math.sin(latitudeDifference / 2) ** 2 +
+		Math.cos(radians(from.latitude)) *
+			Math.cos(radians(to.latitude)) *
+			Math.sin(longitudeDifference / 2) ** 2;
+	return 6371 * 2 * Math.atan2(Math.sqrt(arc), Math.sqrt(1 - arc));
+}
+
+function getCurrentUserCoordinates(): Coordinates | null {
+	try {
+		const storedUser = localStorage.getItem("user");
+		return storedUser ? getCoordinates(JSON.parse(storedUser)) : null;
+	} catch {
+		return null;
+	}
+}
 
 export default function Discover() {
-	const [people, setPeople] = useState<Person[]>([]);
+	const [people, setPeople] = useState<DiscoverPerson[]>([]);
 	const [likedIds, setLikedIds] = useState<number[]>([]);
-	
 
 	const [search, setSearch] = useState("");
 	const [filtersOpen, setFiltersOpen] = useState(false);
+	const [activeFilters, setActiveFilters] = useState<DiscoverFilters | null>(null);
+	const currentUserCoordinates = useMemo(() => getCurrentUserCoordinates(), []);
 
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -63,16 +134,10 @@ export default function Discover() {
 				 * so remove those objects.
 				 */
 
-				const users = peopleData.filter((item: any) => !("isblur" in item));
+				const users = peopleData.filter((item): item is ApiPerson => !("isblur" in item));
 
-				const mappedPeople: Person[] = users.map((user: any) => {
-					let images: string[] = [];
-
-					try {
-						images = JSON.parse(user.images || "[]");
-					} catch {
-						images = [];
-					}
+				const mappedPeople: DiscoverPerson[] = users.map((user) => {
+					const images = parseStringList(user.images);
 
 					return {
 						id: user.id,
@@ -80,8 +145,15 @@ export default function Discover() {
 						age: calculateAge(user.dob),
 						image: user.profilepicture || images[0] || "",
 						location: [user.state, user.country].filter(Boolean).join(", "),
-						state: user.state,
-						intent: user.goal,
+						intent: user.goal || user.lookingfor,
+						gender: user.gender || "",
+						goal: user.goal || "",
+						lookingFor: user.lookingfor || "",
+						belief: user.belief || "",
+						education: user.education_level || "",
+						maritalStatus: user.maritalstatus || "",
+						interests: parseStringList(user.yourinterest),
+						coordinates: getCoordinates(user),
 					};
 				});
 
@@ -89,7 +161,7 @@ export default function Discover() {
 			} catch (error) {
 				console.error("Discover error:", error);
 
-				setError(error instanceof Error ? error.message : "Unable to load people.");
+				setError(getApiMessage(error));
 			} finally {
 				setLoading(false);
 			}
@@ -108,19 +180,57 @@ export default function Discover() {
 		});
 	};
 
-	const handleFilters = (filters: Record<string, unknown>) => {
-		console.log("Applied filters:", filters);
-	};
+	const handleFilters = (filters: DiscoverFilters) => setActiveFilters(filters);
 
 	const filteredPeople = useMemo(() => {
 		const query = search.trim().toLowerCase();
 
-		if (!query) {
-			return people;
-		}
-
-		return people.filter((person) => person.name.toLowerCase().includes(query));
-	}, [people, search]);
+		return people.filter((person) => {
+			if (
+				query &&
+				!person.name.toLowerCase().includes(query) &&
+				!person.location.toLowerCase().includes(query)
+			) {
+				return false;
+			}
+			if (!activeFilters) return true;
+			if (activeFilters.gender && !matches(person.gender, activeFilters.gender)) return false;
+			if (
+				activeFilters.goal &&
+				!matches(person.goal, activeFilters.goal) &&
+				!matches(person.lookingFor, activeFilters.goal)
+			) {
+				return false;
+			}
+			if (activeFilters.belief && !matches(person.belief, activeFilters.belief)) return false;
+			if (activeFilters.education && !matches(person.education, activeFilters.education)) return false;
+			if (
+				activeFilters.maritalStatus &&
+				!matches(person.maritalStatus, activeFilters.maritalStatus)
+			) {
+				return false;
+			}
+			if (person.age < activeFilters.ageFrom || person.age > activeFilters.ageTo) return false;
+			if (
+				activeFilters.interests.length > 0 &&
+				!activeFilters.interests.some((interest) =>
+					person.interests.some((personInterest) => matches(personInterest, interest)),
+				)
+			) {
+				return false;
+			}
+			if (activeFilters.distance < 100 && currentUserCoordinates) {
+				if (
+					!person.coordinates ||
+					distanceInKilometers(currentUserCoordinates, person.coordinates) >
+						activeFilters.distance
+				) {
+					return false;
+				}
+			}
+			return true;
+		});
+	}, [activeFilters, currentUserCoordinates, people, search]);
 
 	return (
 		<>

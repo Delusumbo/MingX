@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import Heart from "../../assets/images/love.png";
 import AbstractLine from "../../assets/images/Line.png";
@@ -30,10 +30,16 @@ import { IoIosMail } from "react-icons/io";
 
 
 const Home = () => {
-	
+	const location = useLocation();
+	const message = typeof location.state?.message === "string" ? location.state.message : "";
 
 	return (
 		<div className="min-h-screen">
+			{message && (
+				<div role="status" className="bg-green-50 px-5 py-3 text-center text-sm text-green-700">
+					{message}
+				</div>
+			)}
 			<header className="relative flex items-center justify-between bg-white px-5 py-4 lg:px-24">
 				{/* Logo */}
 				<div>
@@ -478,26 +484,26 @@ const Home = () => {
 
 						<ul className="space-y-3">
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
-									Terms of Service
+								<Link to="/terms-of-use" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+									Terms of Use
 								</Link>
 							</li>
 
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="/privacy-policy" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Privacy Policy
 								</Link>
 							</li>
 
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
-									Cookie Policy
+								<Link to="/child-policy" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+									Child Policy
 								</Link>
 							</li>
 
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
-									Community Guidelines
+								<Link to="/delete-account" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+									Delete Account
 								</Link>
 							</li>
 						</ul>
@@ -541,12 +547,19 @@ const Home = () => {
 						<ul>
 							<li>
 								<Link
-									to="mailto:info@mingx.com"
+									to="/support"
+									className="mb-3 inline-block text-sm text-gray-600 transition hover:text-[#C43266]">
+									Support
+								</Link>
+							</li>
+							<li>
+								<Link
+									to="mailto:support@mingxlive.com"
 									className="flex items-center gap-3 text-sm text-gray-600 transition hover:text-[#C43266]">
 									<span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#C43266] text-white">
 										<IoIosMail />
 									</span>
-									info@mingx.com
+									support@mingxlive.com
 								</Link>
 							</li>
 						</ul>

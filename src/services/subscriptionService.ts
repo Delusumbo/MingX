@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 export async function createSubscription(cardNonce: string): Promise<unknown> {
 	const token = localStorage.getItem("token");
@@ -20,7 +24,7 @@ export async function createSubscription(cardNonce: string): Promise<unknown> {
 			data = JSON.parse(responseText);
 		} catch {
 			if (response.ok) {
-				throw new Error("The subscription API returned an invalid response.");
+				throw new ApiRequestError(getApiMessage(null));
 			}
 
 			data = { message: responseText };
@@ -28,12 +32,7 @@ export async function createSubscription(cardNonce: string): Promise<unknown> {
 	}
 
 	if (!response.ok) {
-		const message =
-			typeof data === "object" && data !== null && "message" in data
-				? String(data.message)
-				: `The subscription request failed (${response.status}).`;
-
-		throw new Error(message);
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

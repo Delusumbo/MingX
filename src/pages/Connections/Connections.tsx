@@ -3,6 +3,7 @@ import { Header } from "../../components/Layout";
 import PersonCard from "../../components/PersonCard";
 import type { Person } from "../../types";
 import { getAllYourMatches, type ApiConnection } from "../../services/connectionService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 function calculateAge(dob: string | null) {
 	if (!dob) return 0;
@@ -72,7 +73,7 @@ export default function Connections() {
 			} catch (err) {
 				console.error("Connections error:", err);
 
-				setError(err instanceof Error ? err.message : "Unable to load connections.");
+				setError(getApiMessage(err));
 			} finally {
 				setLoading(false);
 			}

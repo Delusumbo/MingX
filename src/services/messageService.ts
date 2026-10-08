@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 function authHeaders(extra: Record<string, string> = {}) {
 	const token = localStorage.getItem("token");
@@ -66,7 +70,7 @@ export async function getConversations(): Promise<ApiConversation[]> {
 	const data = await response.json();
 
 	if (!response.ok) {
-		throw new Error(data?.message || "Unable to load conversations.");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data?.data ?? data;
@@ -81,7 +85,7 @@ export async function getMessages(conversationId: number): Promise<ApiMessage[]>
 	const data = await response.json();
 
 	if (!response.ok) {
-		throw new Error(data?.message || "Unable to load messages.");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data?.data ?? data;
@@ -112,7 +116,7 @@ export async function sendMessage({ receiverId, messageText, file }: SendMessage
 	const data = await response.json();
 
 	if (!response.ok) {
-		throw new Error(data?.message || "Unable to send message.");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

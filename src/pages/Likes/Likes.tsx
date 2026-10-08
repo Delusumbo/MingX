@@ -6,6 +6,7 @@ import PersonCard from "../../components/PersonCard";
 import type { Person } from "../../types";
 
 import { getLikedUsers } from "../../services/likedService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 type Tab = "likedYou" | "likedByYou";
 
@@ -73,7 +74,7 @@ export default function Likes() {
 			} catch (error) {
 				console.error("Likes error:", error);
 
-				setError(error instanceof Error ? error.message : "Unable to load likes.");
+				setError(getApiMessage(error));
 			} finally {
 				setLoading(false);
 			}

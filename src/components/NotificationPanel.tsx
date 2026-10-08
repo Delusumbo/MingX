@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bell, X } from "lucide-react";
 import { getNotifications } from "../services/notificationService";
+import { getApiMessage } from "../utils/apiMessages";
 
 type Notification = {
 	id: number;
@@ -48,7 +49,7 @@ export default function NotificationPanel({ isOpen, onClose }: NotificationPanel
 			} catch (error) {
 				console.error("Notification error:", error);
 
-				setError(error instanceof Error ? error.message : "Unable to load notifications.");
+				setError(getApiMessage(error));
 			} finally {
 				setLoading(false);
 			}

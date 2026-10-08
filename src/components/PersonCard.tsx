@@ -3,6 +3,7 @@ import { Heart, MapPin, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { likeUser, unlikeUser } from "../services/likeService";
+import { getApiMessage } from "../utils/apiMessages";
 
 import type { Person } from "../types";
 
@@ -21,6 +22,7 @@ export default function PersonCard({
 }: PersonCardProps) {
 	const [liking, setLiking] = useState(false);
 	const [liked, setLiked] = useState(isLiked);
+	const [feedback, setFeedback] = useState<{ message: string; error: boolean } | null>(null);
 
 	useEffect(() => {
 		setLiked(isLiked);
@@ -34,17 +36,18 @@ export default function PersonCard({
 		try {
 			setLiking(true);
 
+			const response = liked ? await unlikeUser(person.id) : await likeUser(person.id);
 			if (liked) {
-				await unlikeUser(person.id);
 				setLiked(false);
 			} else {
-				await likeUser(person.id);
 				setLiked(true);
 			}
 
+			setFeedback({ message: getApiMessage(response, "Request completed."), error: false });
 			onLiked?.(person.id, !liked);
 		} catch (error) {
 			console.error("Like/unlike error:", error);
+			setFeedback({ message: getApiMessage(error), error: true });
 		} finally {
 			setLiking(false);
 		}
@@ -86,6 +89,13 @@ export default function PersonCard({
 
 			{/* Content */}
 			<div className="p-5">
+				{feedback && (
+					<p
+						role={feedback.error ? "alert" : "status"}
+						className={`mb-4 text-sm ${feedback.error ? "text-red-600" : "text-green-700"}`}>
+						{feedback.message}
+					</p>
+				)}
 				{/* Intent */}
 				<div className="mb-5 flex items-center justify-between gap-4">
 					<div className="flex items-center gap-3">

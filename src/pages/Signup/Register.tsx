@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import { registerUser } from "../../auth/authService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 type FormData = {
 	name: string;
@@ -418,17 +419,17 @@ const Register = () => {
 				form.append("profilepicture", formData.profilePicture);
 			}
 
-			await registerUser(form);
+			const response = await registerUser(form);
 
 			navigate("/login", {
 				state: {
-					message: "Account created successfully. Check your email to activate your account.",
+					message: getApiMessage(response, "Request completed."),
 				},
 			});
 		} catch (error) {
 			console.error("Registration error:", error);
 
-			setError(error instanceof Error ? error.message : "Something went wrong");
+			setError(getApiMessage(error));
 
 			setCreating(false);
 		}

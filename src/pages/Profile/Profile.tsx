@@ -13,7 +13,7 @@ import {
 	UsersRound,
 } from "lucide-react";
 import { Header } from "../../components/Layout";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const storedUser = localStorage.getItem("user");
 
@@ -120,11 +120,19 @@ const information: ProfileInfo[] = [
 ];
 
 export default function Profile() {
+	const location = useLocation();
+	const message = typeof location.state?.message === "string" ? location.state.message : "";
+
 	return (
 		<>
 			<Header searchPlaceholder="Search by name or message" />
 
 			<section className="px-5 pb-24 pt-10 md:px-8 lg:px-10">
+				{message && (
+					<div role="status" className="mb-5 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+						{message}
+					</div>
+				)}
 				<div className="flex items-center justify-between">
 					<h1 className="text-3xl font-bold text-[#67307d]">Profile</h1>
 

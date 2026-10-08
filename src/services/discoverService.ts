@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 export type ApiPerson = {
 	id: number;
@@ -28,6 +32,8 @@ export type ApiPerson = {
 	usertype: string;
 	is_premium: boolean | null;
 	status: string;
+	latitude?: number | string | null;
+	longitude?: number | string | null;
 };
 
 export type DiscoverResponse = ApiPerson | { isblur: boolean };
@@ -51,7 +57,7 @@ export async function getPeople(): Promise<DiscoverResponse[]> {
 	
 
 	if (!response.ok) {
-		throw new Error(data.message || "Failed to load people");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

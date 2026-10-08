@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import { verifyOtp } from "../../auth/authService";
 import { useAuth } from "../../context/AuthContext"; // adjust to your actual path/file
+import { getApiMessage } from "../../utils/apiMessages";
 
 const OTP = () => {
     const navigate = useNavigate();
@@ -98,9 +99,7 @@ const OTP = () => {
         } catch (error) {
             console.error("OTP verification error:", error);
 
-            setError(
-                error instanceof Error ? error.message : "Invalid verification code. Please try again.",
-            );
+            setError(getApiMessage(error));
         } finally {
             setLoading(false);
         }

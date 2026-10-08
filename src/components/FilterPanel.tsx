@@ -1,10 +1,22 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
+export type DiscoverFilters = {
+	gender: string;
+	goal: string;
+	belief: string;
+	education: string;
+	maritalStatus: string;
+	ageFrom: number;
+	ageTo: number;
+	distance: number;
+	interests: string[];
+};
+
 type FilterPanelProps = {
 	isOpen: boolean;
 	onClose: () => void;
-	onApply: (filters: Record<string, unknown>) => void;
+	onApply: (filters: DiscoverFilters) => void;
 };
 
 export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelProps) {
@@ -31,11 +43,23 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 		setGoal("");
 		setBelief("");
 		setEducation("");
-		setMaritalStatus("");		
+		setMaritalStatus("");
 		setAgeFrom(18);
 		setAgeTo(50);
 		setDistance(50);
 		setSelectedInterests([]);
+		onApply({
+			gender: "",
+			goal: "",
+			belief: "",
+			education: "",
+			maritalStatus: "",
+			ageFrom: 18,
+			ageTo: 50,
+			distance: 50,
+			interests: [],
+		});
+		onClose();
 	};
 
 	const handleApply = () => {
@@ -44,7 +68,7 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 			goal,
 			belief,
 			education,
-			maritalStatus,			
+			maritalStatus,
 			ageFrom,
 			ageTo,
 			distance,
@@ -96,7 +120,7 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 								<button
 									key={item}
 									type="button"
-									onClick={() => setGender(item)}
+									onClick={() => setGender(gender === item ? "" : item)}
 									className={`rounded-xl border px-4 py-3 text-sm transition ${
 										gender === item
 											? "border-[#ca2e6b] bg-[#ca2e6b] text-white"
@@ -117,7 +141,7 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 								<button
 									key={item}
 									type="button"
-									onClick={() => setGoal(item)}
+									onClick={() => setGoal(goal === item ? "" : item)}
 									className={`rounded-xl border px-3 py-3 text-sm transition ${
 										goal === item
 											? "border-[#ca2e6b] bg-[#ca2e6b] text-white"
@@ -171,7 +195,7 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 								<button
 									key={item}
 									type="button"
-									onClick={() => setMaritalStatus(item)}
+									onClick={() => setMaritalStatus(maritalStatus === item ? "" : item)}
 									className={`rounded-xl border px-3 py-3 text-sm transition ${
 										maritalStatus === item
 											? "border-[#ca2e6b] bg-[#ca2e6b] text-white"
@@ -199,7 +223,9 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 								min="18"
 								max="100"
 								value={ageFrom}
-								onChange={(e) => setAgeFrom(Number(e.target.value))}
+								onChange={(e) =>
+									setAgeFrom(Math.max(18, Math.min(100, Number(e.target.value) || 18)))
+								}
 								className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#ca2e6b]"
 							/>
 
@@ -208,7 +234,9 @@ export default function FilterPanel({ isOpen, onClose, onApply }: FilterPanelPro
 								min="18"
 								max="100"
 								value={ageTo}
-								onChange={(e) => setAgeTo(Number(e.target.value))}
+								onChange={(e) =>
+									setAgeTo(Math.max(18, Math.min(100, Number(e.target.value) || 18)))
+								}
 								className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#ca2e6b]"
 							/>
 						</div>

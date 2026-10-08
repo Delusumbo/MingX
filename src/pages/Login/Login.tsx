@@ -5,6 +5,7 @@ import Banner2 from "../../assets/images/banner2.png";
 import Banner3 from "../../assets/images/banner3.png";
 import Logo from "../../assets/images/Mingx.png";
 import { loginUser } from "../../auth/authService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 
 const Login = () => {
@@ -35,11 +36,7 @@ const Login = () => {
     } catch (error) {
         console.error("Login error:", error);
 
-        setError(
-            error instanceof Error
-                ? error.message
-                : "Unable to login. Please try again."
-        );
+        setError(getApiMessage(error));
     } finally {
         setLoading(false);
     }
@@ -165,11 +162,7 @@ const Login = () => {
 					<div className="mb-8">
 						{message && (
 							<div className="mb-5 rounded-2xl border border-[#C43266]/20 bg-[#F9E8EE] px-5 py-4">
-								<p className="font-semibold text-[#652F7B]">Account created successfully!</p>
-
-								<p className="mt-1 text-sm text-gray-600">
-									Before you login, check your email to activate your account.
-								</p>
+								<p className="text-sm text-gray-700">{message}</p>
 							</div>
 						)}
 						{error && (

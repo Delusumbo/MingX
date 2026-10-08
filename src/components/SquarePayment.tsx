@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getApiMessage } from "../utils/apiMessages";
 
 declare global {
 	interface Window {
@@ -16,7 +17,7 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 	const [loading, setLoading] = useState(true);
 	const [processing, setProcessing] = useState(false);
 	const [error, setError] = useState("");
-	const [success, setSuccess] = useState(false);
+	const [successMessage, setSuccessMessage] = useState("");
 
 	const appId = "sandbox-sq0idb-GFfOcndZWTu3-xV6cVopUQ";
 	const locationId = "L130YCW3KZGY7";
@@ -50,7 +51,7 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 			} catch (err) {
 				console.error("Square initialization error:", err);
 
-				setError(err instanceof Error ? err.message : "Unable to load payment form.");
+				setError(getApiMessage(err));
 
 				setLoading(false);
 			}
@@ -104,39 +105,32 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 
 				console.log("Square payment token received:", token);
 
-				if (onTokenReceived) {
-					await onTokenReceived(token);
-				}
-
-				setSuccess(true);
+				const response = onTokenReceived ? await onTokenReceived(token) : null;
+				setSuccessMessage(getApiMessage(response, "Request completed."));
 			} else {
 				const message =
 					result.errors?.map((item: { message: string }) => item.message).join("\n") ||
-					"Unable to process card.";
+					"The request could not be completed. Please try again.";
 
 				setError(message);
 			}
 		} catch (err) {
 			console.error("Payment error:", err);
 
-			setError(err instanceof Error ? err.message : "Payment failed.");
+			setError(getApiMessage(err));
 		} finally {
 			setProcessing(false);
 		}
 	};
 
-	if (success) {
+	if (successMessage) {
 		return (
 			<div className="py-10 text-center">
 				<div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-600">
 					✓
 				</div>
 
-				<h3 className="mt-5 text-xl font-bold text-gray-900">Subscription active!</h3>
-
-				<p className="mt-2 text-sm text-gray-500">
-					Your payment was successful and your subscription is active.
-				</p>
+				<p role="status" className="mt-5 text-sm text-gray-700">{successMessage}</p>
 			</div>
 		);
 	}

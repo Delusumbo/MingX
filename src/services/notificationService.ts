@@ -1,6 +1,9 @@
 
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
 
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 export type ApiNotification = {
 	id: number;
@@ -33,7 +36,7 @@ export async function getNotifications(): Promise<ApiNotification[]> {
 	const data = await response.json();
 
 	if (!response.ok) {
-		throw new Error(data.message || "Failed to load notifications");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

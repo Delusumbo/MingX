@@ -13,6 +13,7 @@ import {
 	type ApiMessage,
 	type ApiUser,
 } from "../../services/messageService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 // Derive "the other person" from a conversation given my own id
 function getOtherUser(conversation: ApiConversation, myId: number | null): ApiUser {
@@ -45,6 +46,10 @@ export default function Matches() {
 
 	const [messageText, setMessageText] = useState("");
 	const [sending, setSending] = useState(false);
+	const [actionFeedback, setActionFeedback] = useState<{
+		message: string;
+		error: boolean;
+	} | null>(null);
 
 	const [chatFilter, setChatFilter] = useState<ChatFilter>("all");
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -127,9 +132,7 @@ export default function Matches() {
 				setConversations(data);
 			} catch (error) {
 				console.error("Conversations error:", error);
-				setConversationsError(
-					error instanceof Error ? error.message : "Unable to load conversations.",
-				);
+				setConversationsError(getApiMessage(error));
 			} finally {
 				setLoadingConversations(false);
 			}
@@ -179,12 +182,15 @@ export default function Matches() {
 
 		try {
 			setSending(true);
+			setActionFeedback(null);
 
-			await sendMessage({
+			const response = await sendMessage({
 				receiverId: selectedOtherUser.id,
 				messageText: text,
 				file,
 			});
+			const message = getApiMessage(response, "Request completed.");
+			if (message) setActionFeedback({ message, error: false });
 
 			setMessageText("");
 
@@ -205,6 +211,7 @@ export default function Matches() {
 			}
 		} catch (error) {
 			console.error("Send error:", error);
+			setActionFeedback({ message: getApiMessage(error), error: true });
 		} finally {
 			setSending(false);
 		}
@@ -217,11 +224,13 @@ export default function Matches() {
 		const load = async () => {
 			try {
 				setLoadingThread(true);
+				setActionFeedback(null);
 
 				const data = await getMessages(selectedConversationId);
 				setThreadMessages(data);
 			} catch (error) {
 				console.error("Messages error:", error);
+				setActionFeedback({ message: getApiMessage(error), error: true });
 			} finally {
 				setLoadingThread(false);
 			}
@@ -557,6 +566,18 @@ export default function Matches() {
 										</div>
 									</div>
 								</div>
+
+								{actionFeedback && (
+									<p
+										role={actionFeedback.error ? "alert" : "status"}
+										className={`mx-5 mt-3 rounded-lg px-3 py-2 text-sm ${
+											actionFeedback.error
+												? "bg-red-50 text-red-600"
+												: "bg-green-50 text-green-700"
+										}`}>
+										{actionFeedback.message}
+									</p>
+								)}
 
 								{/* Messages */}
 								{/* Messages */}

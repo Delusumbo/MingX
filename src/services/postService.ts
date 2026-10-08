@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 function authHeaders(): HeadersInit {
 	const token = localStorage.getItem("token");
@@ -27,7 +31,7 @@ async function request(endpoint: string, init: RequestInit = {}): Promise<unknow
 			data = JSON.parse(responseText);
 		} catch {
 			if (response.ok) {
-				throw new Error("The posts API returned an invalid response.");
+				throw new ApiRequestError(getApiMessage(null));
 			}
 
 			data = { message: responseText };
@@ -35,12 +39,7 @@ async function request(endpoint: string, init: RequestInit = {}): Promise<unknow
 	}
 
 	if (!response.ok) {
-		const message =
-			typeof data === "object" && data !== null && "message" in data
-				? String(data.message)
-				: "The posts request failed.";
-
-		throw new Error(message);
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

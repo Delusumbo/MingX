@@ -3,6 +3,7 @@ import { ArrowLeft, Camera, Save, User, Heart, Ruler, MapPin } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/Layout";
 import { updateProfile } from "../../services/profileService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 type UserData = {
 	id?: number;
@@ -83,7 +84,6 @@ export default function EditProfile() {
 			};
 
 	const [formData, setFormData] = useState<UserData>(initialUser);
-	const [saved, setSaved] = useState(false);
 	const [profileImage, setProfileImage] = useState<File | null>(null);
 
 	const handleChange = (
@@ -96,7 +96,6 @@ export default function EditProfile() {
 			[name]: value,
 		}));
 
-		setSaved(false);
 	};
 
 	const handleSave = async () => {
@@ -141,15 +140,11 @@ export default function EditProfile() {
 				localStorage.setItem("user", JSON.stringify(data.user));
 			}
 
-			setSaved(true);
-
-			setTimeout(() => {
-				navigate("/profile");
-			}, 700);
+			navigate("/profile", { state: { message: getApiMessage(data, "Request completed.") } });
 		} catch (error) {
 			console.error("Profile update error:", error);
 
-			setError(error instanceof Error ? error.message : "Failed to update profile");
+			setError(getApiMessage(error));
 		} finally {
 			setSaving(false);
 		}
@@ -179,7 +174,7 @@ export default function EditProfile() {
 						className="flex items-center gap-2 rounded-xl bg-linear-to-r from-[#ca2e6b] to-[#67307d] px-7 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
 						<Save size={17} />
 
-						{saving ? "Saving..." : saved ? "Saved!" : "Save Changes"}
+						{saving ? "Saving..." : "Save Changes"}
 					</button>
 				</div>
 
@@ -220,7 +215,6 @@ export default function EditProfile() {
 											profilepicture: preview,
 										}));
 
-										setSaved(false);
 									}}
 								/>
 							</label>
@@ -459,7 +453,7 @@ export default function EditProfile() {
 						onClick={handleSave}
 						className="flex items-center gap-2 rounded-xl bg-linear-to-r from-[#ca2e6b] to-[#67307d] px-7 py-3 text-sm font-semibold text-white transition hover:opacity-90">
 						<Save size={17} />
-						{saved ? "Saved!" : "Save Changes"}
+						Save Changes
 					</button>
 				</div>
 			</section>

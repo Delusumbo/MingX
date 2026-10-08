@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 export type ApiConnection = {
 	id: number;
@@ -61,17 +65,12 @@ export async function getAllYourMatches(): Promise<ApiConnection[]> {
 		try {
 			data = JSON.parse(responseText);
 		} catch {
-			throw new Error("The connections API returned an invalid response.");
+			throw new ApiRequestError(getApiMessage(null));
 		}
 	}
 
 	if (!response.ok) {
-		const message =
-			typeof data === "object" && data !== null && "message" in data
-				? String(data.message)
-				: "Failed to load connections.";
-
-		throw new Error(message);
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	if (Array.isArray(data)) {

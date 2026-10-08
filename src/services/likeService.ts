@@ -1,4 +1,8 @@
-const API_URL = "https://app.mingxdating.com/backend_staging/api/";
+import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
+
+const API_URL = import.meta.env.DEV
+	? "/api/"
+	: "https://app.mingxdating.com/backend/public/api/";
 
 async function apiRequest(endpoint: string, userId: number, field: string) {
 	const token = localStorage.getItem("token");
@@ -22,7 +26,7 @@ async function apiRequest(endpoint: string, userId: number, field: string) {
 	const data = await response.json();
 
 	if (!response.ok) {
-		throw new Error(typeof data === "string" ? data : data.message || "Request failed");
+		throw new ApiRequestError(getApiMessage(data));
 	}
 
 	return data;

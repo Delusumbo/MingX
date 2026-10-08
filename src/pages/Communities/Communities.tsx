@@ -11,6 +11,7 @@ import {
 	getCommunityMessages,
 	sendCommunityMessage,
 } from "../../services/communityService";
+import { getApiMessage } from "../../utils/apiMessages";
 
 type ApiCommunity = {
 	id: number;
@@ -120,7 +121,7 @@ export default function Communities() {
 		} catch (error) {
 			console.error("Failed to load communities:", error);
 
-			const message = error instanceof Error ? error.message : "Unable to load communities.";
+			const message = getApiMessage(error);
 
 			setError(message);
 			showToast("error", message);
@@ -164,7 +165,7 @@ export default function Communities() {
 		} catch (error) {
 			console.error("Failed to load communities:", error);
 
-			const message = error instanceof Error ? error.message : "Unable to load communities.";
+			const message = getApiMessage(error);
 
 			setError(message);
 			showToast("error", message);
@@ -220,13 +221,13 @@ export default function Communities() {
 			setCreating(true);
 			setError("");
 
-			await createCommunity({
+			const response = await createCommunity({
 				name: formData.name.trim(),
 				description: formData.description.trim(),
 				region: formData.region.trim(),
 				image,
 			});
-			showToast("success", "Community created successfully.");
+			showToast("success", getApiMessage(response, "Request completed."));
 
 			setFormData({
 				name: "",
@@ -241,7 +242,7 @@ export default function Communities() {
 		} catch (error) {
 			console.error("Failed to load communities:", error);
 
-			const message = error instanceof Error ? error.message : "Unable to load communities.";
+			const message = getApiMessage(error);
 
 			setError(message);
 			showToast("error", message);
@@ -266,21 +267,21 @@ export default function Communities() {
 				"is_member" in membership &&
 				Boolean((membership as { is_member: unknown }).is_member)
 			) {
-				showToast("error", "You are already a member of this community.");
+				showToast("error", getApiMessage(membership));
 
 				setIsMember(true);
 				return;
 			}
 
-			await joinCommunity(community.id);
+			const response = await joinCommunity(community.id);
 
-			showToast("success", `You joined ${community.name} successfully.`);
+			showToast("success", getApiMessage(response, "Request completed."));
 
 			setIsMember(true);
 
 			await loadCommunities();
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to join community.";
+			const message = getApiMessage(error);
 
 			showToast("error", message);
 		} finally {
@@ -304,7 +305,7 @@ export default function Communities() {
 
 			await loadMessages(community.id);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to load community details.";
+			const message = getApiMessage(error);
 
 			showToast("error", message);
 		} finally {
@@ -320,15 +321,15 @@ export default function Communities() {
 		try {
 			setLeavingId(community.id);
 
-			await leaveCommunity(community.id);
+			const response = await leaveCommunity(community.id);
 
 			setIsMember(false);
 
-			showToast("success", `You have left ${community.name} successfully.`);
+			showToast("success", getApiMessage(response, "Request completed."));
 
 			await loadCommunities();
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to leave community.";
+			const message = getApiMessage(error);
 
 			showToast("error", message);
 		} finally {
@@ -365,7 +366,7 @@ export default function Communities() {
 
 			setMessages(messageList as CommunityMessage[]);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to load messages.";
+			const message = getApiMessage(error);
 
 			showToast("error", message);
 		} finally {
@@ -384,16 +385,20 @@ export default function Communities() {
 		try {
 			setSendingMessage(true);
 
-			await sendCommunityMessage(selectedCommunity.id, messageText.trim(), messageFile);
+			const response = await sendCommunityMessage(
+				selectedCommunity.id,
+				messageText.trim(),
+				messageFile,
+			);
 
 			setMessageText("");
 			setMessageFile(null);
 
-			showToast("success", "Message sent successfully.");
+			showToast("success", getApiMessage(response, "Request completed."));
 
 			await loadMessages(selectedCommunity.id);
 		} catch (error) {
-			const message = error instanceof Error ? error.message : "Unable to send message.";
+			const message = getApiMessage(error);
 
 			showToast("error", message);
 		} finally {

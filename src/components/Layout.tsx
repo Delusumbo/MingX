@@ -1,10 +1,25 @@
-import { Bell, Heart, Home, MessageCircle, Search, Sparkles, User, Users, X } from "lucide-react";
+import {
+	Bell,
+	Heart,
+	Home,
+	LogOut,
+	MessageCircle,
+	Search,
+	Sparkles,
+	Trash2,
+	User,
+	Users,
+	X,
+} from "lucide-react";
 import { Icon } from "@iconify/react";
 import NotificationPanel from "./NotificationPanel";
 import Logo from "../assets/images/Mingx.png";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { LayoutProvider, useLayout } from "./LayoutContext";
+import { useAuth } from "../context/AuthContext";
+import { deleteAccount as deleteAccountRequest } from "../auth/authService";
+import { getApiMessage } from "../utils/apiMessages";
 
 type HeaderProps = {
 	onSearch?: (value: string) => void;
@@ -69,6 +84,68 @@ function NavigationItem({ name, path, icon }: { name: string; path: string; icon
 
 			<span>{name}</span>
 		</NavLink>
+	);
+}
+
+function AccountActions() {
+	const { logout } = useAuth();
+	const { closeMobileMenu } = useLayout();
+	const navigate = useNavigate();
+	const [deleting, setDeleting] = useState(false);
+	const [error, setError] = useState("");
+
+	const handleLogout = () => {
+		logout();
+		closeMobileMenu();
+		navigate("/login", { replace: true });
+	};
+
+	const handleDeleteAccount = async () => {
+		const confirmed = window.confirm(
+			"Delete your account permanently? This action cannot be undone.",
+		);
+		if (!confirmed) return;
+
+		setDeleting(true);
+		setError("");
+		try {
+			const response = await deleteAccountRequest();
+			logout();
+			closeMobileMenu();
+			navigate("/", {
+				replace: true,
+				state: { message: getApiMessage(response, "Request completed.") },
+			});
+		} catch (deleteError) {
+			setError(getApiMessage(deleteError));
+		} finally {
+			setDeleting(false);
+		}
+	};
+
+	return (
+		<>
+			<button
+				type="button"
+				onClick={handleLogout}
+				className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-[#f8edf3] hover:text-[#67307d]">
+				<LogOut size={19} />
+				<span>Log out</span>
+			</button>
+			<button
+				type="button"
+				onClick={() => void handleDeleteAccount()}
+				disabled={deleting}
+				className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+				<Trash2 size={19} />
+				<span>{deleting ? "Deleting account..." : "Delete account"}</span>
+			</button>
+			{error && (
+				<p role="alert" className="px-4 text-xs leading-5 text-red-600">
+					{error}
+				</p>
+			)}
+		</>
 	);
 }
 
@@ -200,6 +277,7 @@ function Sidebar() {
 
 					<span>Go Premium</span>
 				</Link>
+				<AccountActions />
 			</div>
 		</aside>
 	);
@@ -312,6 +390,9 @@ function MobileSidebar() {
 						<Sparkles size={19} />
 						<span>Premium</span>
 					</NavLink>
+					<div className="mt-2">
+						<AccountActions />
+					</div>
 				</div>
 			</aside>
 		</>
