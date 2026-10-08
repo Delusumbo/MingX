@@ -5,10 +5,10 @@ import {
 } from "../utils/apiMessages";
 
 const API_URL = import.meta.env.DEV
-	? "/api/"
+	? "/https://app.mingxdating.com/backend/public/api"
 	: "https://app.mingxdating.com/backend/public/api/";
 const DELETE_REQUEST_URL = import.meta.env.DEV
-	? "/mingxlive-api/delete/request"
+	? "https://mingxlive.com/backend/public/api/delete/request"
 	: "https://mingxlive.com/backend/public/api/delete/request";
 
 export async function requestAccountDeletion(email: string): Promise<unknown> {
@@ -61,13 +61,26 @@ export async function loginUser(email: string) {
 		}),
 	});
 
-	const data = await response.json();
+	const responseText = await response.text();
+	const data = parseApiResponseBody(responseText);
 
 	if (!response.ok) {
+		if (
+			typeof data === "string" &&
+			/<(?:!doctype\s+html|html)\b/i.test(data)
+		) {
+			throw new ApiRequestError(
+				`Login request failed (HTTP ${response.status}). Please try again.`,
+			);
+		}
 		throw new ApiRequestError(getApiMessage(data));
 	}
 
-	
+	if (data === null || typeof data === "string") {
+		throw new ApiRequestError(
+			"The server returned an invalid response while starting login. Please try again.",
+		);
+	}
 
 	return data;
 }
