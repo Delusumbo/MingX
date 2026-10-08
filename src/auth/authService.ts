@@ -4,9 +4,7 @@ import {
 	parseApiResponseBody,
 } from "../utils/apiMessages";
 
-const API_URL = import.meta.env.DEV
-	? "/https://app.mingxdating.com/backend/public/api"
-	: "https://app.mingxdating.com/backend/public/api/";
+const API_URL = "/api/";
 const DELETE_REQUEST_URL = import.meta.env.DEV
 	? "https://mingxlive.com/backend/public/api/delete/request"
 	: "https://mingxlive.com/backend/public/api/delete/request";
