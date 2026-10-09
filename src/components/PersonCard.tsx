@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Heart, MapPin, MessageCircle } from "lucide-react";
+import { Heart, MapPin, MessageCircle, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import PersonProfileLink from "./PersonProfileLink";
 import { likeUser, unlikeUser } from "../services/likeService";
+import type { ApiPerson } from "../services/discoverService";
 import { getApiMessage } from "../utils/apiMessages";
 
 import type { Person } from "../types";
@@ -12,6 +14,9 @@ type PersonCardProps = {
 	showActions?: boolean;
 	isLiked?: boolean;
 	onLiked?: (userId: number, isLiked: boolean) => void;
+	onFeedback?: (message: string, isError: boolean) => void;
+	profile?: ApiPerson;
+	presenceStatus?: "online" | "offline" | null;
 };
 
 export default function PersonCard({
@@ -19,6 +24,9 @@ export default function PersonCard({
 	showActions = true,
 	isLiked = false,
 	onLiked,
+	onFeedback,
+	profile,
+	presenceStatus,
 }: PersonCardProps) {
 	const [liking, setLiking] = useState(false);
 	const [liked, setLiked] = useState(isLiked);
@@ -43,11 +51,21 @@ export default function PersonCard({
 				setLiked(true);
 			}
 
-			setFeedback({ message: getApiMessage(response, "Request completed."), error: false });
+			const feedbackMessage = getApiMessage(response, liked ? "Like removed." : "Liked.");
+			if (onFeedback) {
+				onFeedback(feedbackMessage, false);
+			} else {
+				setFeedback({ message: feedbackMessage, error: false });
+			}
 			onLiked?.(person.id, !liked);
 		} catch (error) {
 			console.error("Like/unlike error:", error);
-			setFeedback({ message: getApiMessage(error), error: true });
+			const feedbackMessage = getApiMessage(error);
+			if (onFeedback) {
+				onFeedback(feedbackMessage, true);
+			} else {
+				setFeedback({ message: feedbackMessage, error: true });
+			}
 		} finally {
 			setLiking(false);
 		}
@@ -57,24 +75,44 @@ export default function PersonCard({
 		<article className="group overflow-hidden rounded-[26px] bg-white shadow-[0_8px_25px_rgba(20,10,20,.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(20,10,20,.12)]">
 			{/* Image */}
 			<div className="relative h-82.5 overflow-hidden">
-				<img
-					src={person.image}
-					alt={person.name}
-					className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-				/>
+				<PersonProfileLink
+					personId={person.id}
+					personName={person.name}
+					state={profile ? { profile } : undefined}
+					className="absolute inset-0"
+					aria-label={`View ${person.name}'s profile`}>
+					<img
+						src={person.image}
+						alt={person.name}
+						className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+					/>
+				</PersonProfileLink>
 
 				<div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-black/70 to-transparent" />
 
-				{/* Online */}
-				<span className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium backdrop-blur">
-					<span className="h-2 w-2 rounded-full bg-green-500" />
-					Online
-				</span>
+				{presenceStatus && (
+					<span className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium capitalize backdrop-blur">
+						<span
+							className={`h-2 w-2 rounded-full ${
+								presenceStatus === "online" ? "bg-green-500" : "bg-gray-400"
+							}`}
+						/>
+						{presenceStatus}
+					</span>
+				)}
 
 				{/* Name */}
 				<div className="absolute bottom-5 left-5 right-5 text-white">
 					<div className="flex items-center gap-2">
-						<h2 className="text-xl font-bold">{person.name}</h2>
+						<h2 className="text-xl font-bold">
+							<PersonProfileLink
+								personId={person.id}
+								personName={person.name}
+								state={profile ? { profile } : undefined}
+								className="transition hover:underline">
+								{person.name}
+							</PersonProfileLink>
+						</h2>
 
 						<span className="text-sm">{person.age}</span>
 					</div>
@@ -117,7 +155,7 @@ export default function PersonCard({
 
 						{/* Message */}
 						<Link
-							to={`/message?receiver_id=${person.id}`}
+							to="/message"
 							state={{ person: { id: person.id, name: person.name, image: person.image } }}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
@@ -139,8 +177,18 @@ export default function PersonCard({
 				{/* Connection state */}
 				{!showActions && (
 					<div className="flex items-center gap-3">
+						{profile && (
+							<PersonProfileLink
+								personId={person.id}
+								personName={person.name}
+								state={{ profile }}
+								className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#67307d] py-3 text-sm font-medium text-[#67307d] transition hover:bg-[#67307d] hover:text-white">
+								<UserRound size={17} />
+								View profile
+							</PersonProfileLink>
+						)}
 						<Link
-							to={`/message?receiver_id=${person.id}`}
+							to="/message"
 							state={{ person: { id: person.id, name: person.name, image: person.image } }}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />

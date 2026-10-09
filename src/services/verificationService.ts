@@ -4,10 +4,9 @@ import {
 	parseApiResponseBody,
 } from "../utils/apiMessages";
 import { getToken } from "../auth/authService";
+import { API_URL } from "./apiConfig";
 
-const API_BASE_URL =  import.meta.env.DEV
-	? "/api/verification/"
-	: "https://app.mingxdating.com/backend/public/api/verification/";
+const API_BASE_URL = `${API_URL}verification/`;
 
 type VerificationAction = "start" | "complete" | "status";
 

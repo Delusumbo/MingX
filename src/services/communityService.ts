@@ -1,8 +1,5 @@
 import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
-
-const API_URL = import.meta.env.DEV
-	? "/api"
-	: "https://app.mingxdating.com/backend/public/api";
+import { API_URL } from "./apiConfig";
 
 function authHeaders(): HeadersInit {
 	const token = localStorage.getItem("token");
@@ -14,7 +11,7 @@ function authHeaders(): HeadersInit {
 }
 
 async function request(endpoint: string, init: RequestInit = {}): Promise<unknown> {
-	const response = await fetch(`${API_URL}/${endpoint}`, {
+	const response = await fetch(`${API_URL}${endpoint}`, {
 		...init,
 		headers: {
 			...authHeaders(),

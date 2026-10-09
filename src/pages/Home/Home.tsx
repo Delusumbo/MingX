@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import Logo from "../../assets/images/Mingx.png";
 import Heart from "../../assets/images/love.png";
 import AbstractLine from "../../assets/images/Line.png";
@@ -31,6 +32,8 @@ import { IoIosMail } from "react-icons/io";
 
 const Home = () => {
 	const location = useLocation();
+	const navigate = useNavigate();
+	const [joinEmail, setJoinEmail] = useState("");
 	const message = typeof location.state?.message === "string" ? location.state.message : "";
 
 	return (
@@ -230,7 +233,7 @@ const Home = () => {
 								<h3 className="text-xl font-bold text-black my-3">Start a conversation</h3>
 								<hr className="text-[#652F7B4D]" />
 								<p className="my-3">
-									Connect, exchange ideas, and build meaningful relationships through genuine
+									Start Chat and video calls, to build meaningful relationships through genuine
 									conversations.
 								</p>
 							</div>
@@ -399,7 +402,7 @@ const Home = () => {
 							<Link to="#">
 								<img src={Apple} alt="App Store" className="" />
 							</Link>
-							<Link to="#">
+							<Link to="https://play.google.com/store/apps/details?id=com.dating.mingxapp&hl=en" target="_blank" rel="noopener noreferrer">
 								<img src={Google} alt="Google Play" className="" />
 							</Link>
 						</div>
@@ -418,10 +421,18 @@ const Home = () => {
 						Join MingX today and discover people, communities, and conversations that matter to you.
 					</p>
 
-					<form className="mx-auto flex flex-col gap-3 sm:flex-row">
+					<form
+						onSubmit={(event) => {
+							event.preventDefault();
+							navigate("/login", { state: { email: joinEmail.trim() } });
+						}}
+						className="mx-auto flex flex-col gap-3 sm:flex-row">
 						<input
 							type="email"
+							value={joinEmail}
+							onChange={(event) => setJoinEmail(event.target.value)}
 							placeholder="you@email.com"
+							aria-label="Email address"
 							className="w-full
           lg:w-[80%]
           rounded-md

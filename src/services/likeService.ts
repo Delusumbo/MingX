@@ -1,8 +1,5 @@
 import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
-
-const API_URL = import.meta.env.DEV
-	? "/api/"
-	: "https://app.mingxdating.com/backend/public/api/";
+import { API_URL } from "./apiConfig";
 
 async function apiRequest(endpoint: string, userId: number, field: string) {
 	const token = localStorage.getItem("token");

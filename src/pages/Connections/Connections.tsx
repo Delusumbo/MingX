@@ -4,6 +4,7 @@ import PersonCard from "../../components/PersonCard";
 import type { Person } from "../../types";
 import { getAllYourMatches, type ApiConnection } from "../../services/connectionService";
 import { getApiMessage } from "../../utils/apiMessages";
+import { useToast } from "../../components/ToastProvider";
 
 function calculateAge(dob: string | null) {
 	if (!dob) return 0;
@@ -54,6 +55,7 @@ function mapConnectionToPerson(user: ApiConnection): Person {
 }
 
 export default function Connections() {	
+	const { showToast } = useToast();
 
 	const [connections, setConnections] = useState<ApiConnection[]>([]);
 
@@ -74,13 +76,14 @@ export default function Connections() {
 				console.error("Connections error:", err);
 
 				setError(getApiMessage(err));
+				showToast(getApiMessage(err), "error");
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		loadConnections();
-	}, []);
+	}, [showToast]);
 
 	const filteredPeople = useMemo(() => {
 		/*
@@ -143,7 +146,13 @@ export default function Connections() {
 				{!loading && !error && filteredPeople.length > 0 && (
 					<div className="mt-16 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
 						{filteredPeople.map((person) => (
-							<PersonCard key={person.id} person={person} />
+							<PersonCard
+								key={person.id}
+								person={person}
+								onFeedback={(message, isError) =>
+									showToast(message, isError ? "error" : "success")
+								}
+							/>
 						))}
 					</div>
 				)}

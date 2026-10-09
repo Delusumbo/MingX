@@ -10,7 +10,10 @@ import { getApiMessage } from "../../utils/apiMessages";
 
 const Login = () => {
 	const navigate = useNavigate();
-	const [email, setEmail] = useState("");
+	const location = useLocation();
+	const initialEmail =
+		typeof location.state?.email === "string" ? location.state.email : "";
+	const [email, setEmail] = useState(initialEmail);
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 
@@ -73,8 +76,6 @@ const Login = () => {
 		return () => clearInterval(interval);
 	}, []);
 
-	const location = useLocation();
-	
 	const [message] = useState(location.state?.message || "");
 	// const [message, setMessage] = useState(location.state?.message || "");
 	useEffect(() => {

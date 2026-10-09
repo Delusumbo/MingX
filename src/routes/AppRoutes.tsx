@@ -13,6 +13,7 @@ import Discover from "../pages/Discover/Discover";
 import Connections from "../pages/Connections/Connections";
 import Matches from "../pages/Matches/Matches";
 import Profile from "../pages/Profile/Profile";
+import ViewPersonProfile from "../pages/Profile/ViewPersonProfile";
 import Verify from "../pages/Verify/Verify";
 import Premium from "../pages/Premium/Premium";
 import Communities from "../pages/Communities/Communities";
@@ -39,6 +40,7 @@ const pageTitles: Record<string, string> = {
 	"/message": "Messages | MingX",
 	"/profile": "Your Profile | MingX",
 	"/profile/edit": "Edit Profile | MingX",
+	"/people": "View Profile | MingX",
 	"/verify": "Verify Your Account | MingX",
 	"/communities": "Communities | MingX",
 	"/premium": "MingX Premium | Unlock More Features",
@@ -56,7 +58,9 @@ export const AppRoutes = () => {
 	const { pathname } = useLocation();
 
 	useEffect(() => {
-		document.title = pageTitles[pathname] ?? "MingX";
+		document.title =
+			pageTitles[pathname] ??
+			(pathname.startsWith("/people/") ? pageTitles["/people"] : "MingX");
 	}, [pathname]);
 
 	return (
@@ -80,6 +84,7 @@ export const AppRoutes = () => {
 					<Route path="/message" element={<Matches />} />
 					<Route path="/profile" element={<Profile />} />
 					<Route path="/profile/edit" element={<EditProfile />} />
+					<Route path="/people/:personSlug" element={<ViewPersonProfile />} />
 					<Route path="/verify" element={<Verify />} />
 					<Route path="/communities" element={<Communities />} />
 					<Route path="/premium" element={<Premium />} />

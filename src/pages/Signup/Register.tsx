@@ -410,6 +410,7 @@ const Register = () => {
 			form.append("email", formData.email);
 			form.append("state", formData.state);
 			form.append("country", formData.country);
+			form.append("platform", "web");
 
 			formData.photos.forEach((photo) => {
 				form.append("images[]", photo);
@@ -992,25 +993,33 @@ const Register = () => {
 						<h1 className="text-2xl font-bold text-black sm:text-3xl">Location</h1>
 
 						<p className="mt-4 max-w-md text-center text-sm text-gray-700">
-							Let the app locate you to provide best searched results around you
+							Enter your current city or region and country so people can discover you nearby.
 						</p>
 
-						<button
-							type="button"
-							onClick={() => {
-								// Example for now
-								updateField("state", "Lagos");
-								updateField("country", "Nigeria");
-							}}
-							className="mt-8 rounded-xl bg-[#F9E8EE] px-8 py-4 text-sm text-gray-700 hover:ring-2 hover:ring-[#C43266]/30">
-							📍 Use my current location
-						</button>
-
-						{(formData.state || formData.country) && (
-							<p className="mt-3 text-sm text-[#C43266]">
-								{[formData.state, formData.country].filter(Boolean).join(", ")}
-							</p>
-						)}
+						<div className="mt-8 grid w-full max-w-md gap-4">
+							<label className="text-left text-sm font-medium text-gray-700">
+								City or region
+								<input
+									type="text"
+									autoComplete="address-level2"
+									value={formData.state}
+									onChange={(event) => updateField("state", event.target.value)}
+									placeholder="e.g. London"
+									className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#C43266] focus:ring-2 focus:ring-[#C43266]/20"
+								/>
+							</label>
+							<label className="text-left text-sm font-medium text-gray-700">
+								Country
+								<input
+									type="text"
+									autoComplete="country-name"
+									value={formData.country}
+									onChange={(event) => updateField("country", event.target.value)}
+									placeholder="e.g. United Kingdom"
+									className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-[#C43266] focus:ring-2 focus:ring-[#C43266]/20"
+								/>
+							</label>
+						</div>
 					</>
 				);
 

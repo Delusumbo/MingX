@@ -20,6 +20,8 @@ type DiscoverPerson = Person & {
 	maritalStatus: string;
 	interests: string[];
 	coordinates: Coordinates | null;
+	profile: ApiPerson;
+	presenceStatus: "online" | "offline" | null;
 };
 
 function calculateAge(dob: string): number {
@@ -63,6 +65,13 @@ function parseStringList(value: string | null | undefined): string[] {
 		// List values may also be stored as comma-separated strings.
 	}
 	return value.split(",").map((interest) => interest.trim()).filter(Boolean);
+}
+
+function getPresenceStatus(status: string): "online" | "offline" | null {
+	const normalizedStatus = status.trim().toLowerCase();
+	return normalizedStatus === "online" || normalizedStatus === "offline"
+		? normalizedStatus
+		: null;
 }
 
 function matches(value: string, filter: string): boolean {
@@ -154,6 +163,8 @@ export default function Discover() {
 						maritalStatus: user.maritalstatus || "",
 						interests: parseStringList(user.yourinterest),
 						coordinates: getCoordinates(user),
+						profile: user,
+						presenceStatus: getPresenceStatus(user.status),
 					};
 				});
 
@@ -268,6 +279,8 @@ export default function Discover() {
 								showActions={false}
 								isLiked={likedIds.includes(person.id)}
 								onLiked={handleLiked}
+								profile={person.profile}
+								presenceStatus={person.presenceStatus}
 							/>
 						))}
 					</div>

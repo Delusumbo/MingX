@@ -4,16 +4,17 @@ import Logo from "../../assets/images/Mingx.png";
 import { verifyOtp } from "../../auth/authService";
 import { useAuth } from "../../context/AuthContext"; // adjust to your actual path/file
 import { getApiMessage } from "../../utils/apiMessages";
+import { useToast } from "../../components/ToastProvider";
 
 const OTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { showToast } = useToast();
 
     const email = location.state?.email;
 
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
 
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);	
     const [countdown, setCountdown] = useState(60);
 
@@ -45,7 +46,6 @@ const OTP = () => {
         newOtp[index] = value.slice(-1);
 
         setOtp(newOtp);
-        setError("");
 
         // Move to next input
         if (value && index < 5) {
@@ -85,21 +85,21 @@ const OTP = () => {
         const code = otp.join("");
 
         if (code.length !== 6) {
-            setError("Please enter the 6-digit verification code.");
+            showToast("Please enter the 6-digit verification code.", "error");
             return;
         }
 
         try {
             setLoading(true);
-            setError("");
 
             const data = await verifyOtp(email, code);
 			login(data.user, data.token); // updates context state, not just localStorage			
-            window.location.href = "/discover";         
+            showToast("Email verified successfully.");
+            navigate("/discover", { replace: true });
         } catch (error) {
             console.error("OTP verification error:", error);
 
-            setError(getApiMessage(error));
+            showToast(getApiMessage(error), "error");
         } finally {
             setLoading(false);
         }
@@ -142,13 +142,6 @@ const OTP = () => {
 
                         <p className="mt-1 font-semibold text-gray-900">{email}</p>
                     </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                            <p className="text-sm text-red-600">{error}</p>
-                        </div>
-                    )}
 
                     {/* OTP Form */}
                     <form onSubmit={handleVerify} className="mt-8">

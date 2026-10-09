@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Search, UsersRound, Plus, X, MessagesSquare } from "lucide-react";
 
 import { Header } from "../../components/Layout";
+import PersonProfileLink from "../../components/PersonProfileLink";
 import {
 	createCommunity,
 	getCommunities,	
@@ -43,13 +44,20 @@ type CommunityMessage = {
 	created_at?: string;
 	sender_name?: unknown;
 	user?: {
-		id?: number;
+		id?: number | string;
 		name?: string;
 		firstname?: string;
 		lastname?: string;
 	};
+	sender_id?: unknown;
+	user_id?: unknown;
 	[key: string]: unknown;
 };
+
+function getCommunityMessageSenderId(message: CommunityMessage): string | number | null {
+	const id = message.sender_id ?? message.user_id ?? message.user?.id;
+	return typeof id === "string" || typeof id === "number" ? id : null;
+}
 
 function mapCommunity(data: ApiCommunity): Community {
 	return {
@@ -770,11 +778,23 @@ export default function Communities() {
 									const messageBody = message.message_text || message.message || "";
 
 									const attachment = message.file || message.attachment;
+									const senderId = getCommunityMessageSenderId(message);
 
 									return (
 										<div key={message.id ?? index} className="rounded-2xl bg-white p-4 shadow-sm">
 											<div className="flex items-center justify-between gap-3">
-												<p className="text-sm font-semibold text-[#67307d]">{senderName}</p>
+												<p className="text-sm font-semibold text-[#67307d]">
+													{senderId !== null ? (
+														<PersonProfileLink
+															personId={senderId}
+															personName={senderName}
+															className="hover:text-[#ca2e6b] hover:underline">
+															{senderName}
+														</PersonProfileLink>
+													) : (
+														senderName
+													)}
+												</p>
 
 												{message.created_at && (
 													<time className="shrink-0 text-xs text-gray-400">

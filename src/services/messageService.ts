@@ -1,8 +1,5 @@
 import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
-
-const API_URL = import.meta.env.DEV
-	? "/api/"
-	: "https://app.mingxdating.com/backend/public/api/";
+import { API_URL } from "./apiConfig";
 
 function authHeaders(extra: Record<string, string> = {}) {
 	const token = localStorage.getItem("token");
@@ -97,6 +94,36 @@ type SendMessageInput = {
 	file?: File | null;
 };
 
+function isFailedMessageResponse(value: unknown): boolean {
+	if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+
+	const responseData = value as Record<string, unknown>;
+	const status = responseData.status;
+
+	if (
+		responseData.success === false ||
+		status === false ||
+		status === 0 ||
+		(typeof status === "string" &&
+			["error", "failed", "failure", "forbidden", "unauthorized"].includes(
+				status.trim().toLowerCase(),
+			))
+	) {
+		return true;
+	}
+
+	if (
+		responseData.error !== undefined &&
+		responseData.error !== null &&
+		responseData.error !== false &&
+		responseData.error !== ""
+	) {
+		return true;
+	}
+
+	return isFailedMessageResponse(responseData.data);
+}
+
 export async function sendMessage({ receiverId, messageText, file }: SendMessageInput) {
 	const formData = new FormData();
 
@@ -113,9 +140,9 @@ export async function sendMessage({ receiverId, messageText, file }: SendMessage
 		body: formData,
 	});
 
-	const data = await response.json();
+	const data: unknown = await response.json();
 
-	if (!response.ok) {
+	if (!response.ok || isFailedMessageResponse(data)) {
 		throw new ApiRequestError(getApiMessage(data));
 	}
 

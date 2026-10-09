@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Camera, Save, User, Heart, Ruler, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/Layout";
+import { useToast } from "../../components/ToastProvider";
 import { updateProfile } from "../../services/profileService";
 import { getApiMessage } from "../../utils/apiMessages";
 
@@ -49,8 +50,8 @@ function formatInterests(value: unknown) {
 
 export default function EditProfile() {
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState("");
 
 	const storedUser = localStorage.getItem("user");
 
@@ -101,7 +102,6 @@ export default function EditProfile() {
 	const handleSave = async () => {
 		try {
 			setSaving(true);
-			setError("");
 
 			const form = new FormData();
 			const interests = formData.yourinterest
@@ -140,11 +140,12 @@ export default function EditProfile() {
 				localStorage.setItem("user", JSON.stringify(data.user));
 			}
 
-			navigate("/profile", { state: { message: getApiMessage(data, "Request completed.") } });
+			showToast(getApiMessage(data, "Profile updated successfully."));
+			navigate("/profile");
 		} catch (error) {
 			console.error("Profile update error:", error);
 
-			setError(getApiMessage(error));
+			showToast(getApiMessage(error), "error");
 		} finally {
 			setSaving(false);
 		}
@@ -177,10 +178,6 @@ export default function EditProfile() {
 						{saving ? "Saving..." : "Save Changes"}
 					</button>
 				</div>
-
-				{error && (
-					<div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
-				)}
 
 				{/* Profile photo */}
 				<div className="mb-8 rounded-2xl bg-white p-6">
@@ -241,13 +238,6 @@ export default function EditProfile() {
 					<div className="grid gap-5 md:grid-cols-2">
 						<Input label="Full Name" name="name" value={formData.name} onChange={handleChange} />
 
-						<Input
-							label="Email"
-							name="email"
-							type="email"
-							value={formData.email}
-							onChange={handleChange}
-						/>
 
 						<Input
 							label="Date of Birth"

@@ -7,6 +7,7 @@ import type { Person } from "../../types";
 
 import { getLikedUsers } from "../../services/likedService";
 import { getApiMessage } from "../../utils/apiMessages";
+import { useToast } from "../../components/ToastProvider";
 
 type Tab = "likedYou" | "likedByYou";
 
@@ -48,6 +49,7 @@ function mapPeople(users: any[]): Person[] {
 }
 
 export default function Likes() {
+	const { showToast } = useToast();
 	const [activeTab, setActiveTab] = useState<Tab>("likedYou");
 
 	const [likedByYou, setLikedByYou] = useState<Person[]>([]);
@@ -75,13 +77,14 @@ export default function Likes() {
 				console.error("Likes error:", error);
 
 				setError(getApiMessage(error));
+				showToast(getApiMessage(error), "error");
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		loadData();
-	}, []);
+	}, [showToast]);
 
 	const handleLikedByYouChange = (userId: number, isLiked: boolean) => {
 		setLikedByYouIds((current) => {
@@ -170,6 +173,9 @@ export default function Likes() {
 										showActions={false}
 										isLiked={likedByYouIds.includes(person.id)}
 										onLiked={handleLikedYouChange}
+										onFeedback={(message, isError) =>
+											showToast(message, isError ? "error" : "success")
+										}
 									/>
 								))}
 							</div>
@@ -192,6 +198,9 @@ export default function Likes() {
 										showActions={false}
 										isLiked={true}
 										onLiked={handleLikedByYouChange}
+										onFeedback={(message, isError) =>
+											showToast(message, isError ? "error" : "success")
+										}
 									/>
 								))}
 							</div>

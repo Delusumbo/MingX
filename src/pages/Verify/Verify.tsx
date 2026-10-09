@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Header } from "../../components/Layout";
+import { useToast } from "../../components/ToastProvider";
 import {
 	completeFaceVerification,
 	getFaceVerificationStatus,
@@ -21,18 +22,16 @@ function getVerificationDetails(value: unknown): StatusRecord {
 }
 
 export default function Verify() {
+	const { showToast } = useToast();
 	const [sessionReference, setSessionReference] = useState("");
 	const [selfie, setSelfie] = useState<File | null>(null);
 	const [status, setStatus] = useState<unknown>(null);
 	const [loadingStatus, setLoadingStatus] = useState(true);
 	const [starting, setStarting] = useState(false);
 	const [completing, setCompleting] = useState(false);
-	const [error, setError] = useState("");
-	const [message, setMessage] = useState("");
 
 	const refreshStatus = useCallback(async () => {
 		setLoadingStatus(true);
-		setError("");
 		try {
 			const response = await getFaceVerificationStatus();
 			setStatus(response);
@@ -40,11 +39,11 @@ export default function Verify() {
 			const reference = details.session_reference ?? details.sessionReference;
 			if (typeof reference === "string") setSessionReference(reference);
 		} catch (statusError) {
-			setError(getApiMessage(statusError));
+			showToast(getApiMessage(statusError), "error");
 		} finally {
 			setLoadingStatus(false);
 		}
-	}, []);
+	}, [showToast]);
 
 	useEffect(() => {
 		void refreshStatus();
@@ -52,14 +51,12 @@ export default function Verify() {
 
 	const handleStart = async () => {
 		setStarting(true);
-		setError("");
-		setMessage("");
 		try {
 			const result = await startFaceVerification();
 			setSessionReference(result.sessionReference);
-			setMessage(getApiMessage(result.response, "Verification session started."));
+			showToast(getApiMessage(result.response, "Verification session started."));
 		} catch (startError) {
-			setError(getApiMessage(startError));
+			showToast(getApiMessage(startError), "error");
 		} finally {
 			setStarting(false);
 		}
@@ -70,14 +67,12 @@ export default function Verify() {
 		if (!sessionReference || !selfie) return;
 
 		setCompleting(true);
-		setError("");
-		setMessage("");
 		try {
 			const response = await completeFaceVerification(sessionReference, selfie);
-			setMessage(getApiMessage(response, "Verification request completed."));
+			showToast(getApiMessage(response, "Verification request submitted."));
 			await refreshStatus();
 		} catch (completeError) {
-			setError(getApiMessage(completeError));
+			showToast(getApiMessage(completeError), "error");
 		} finally {
 			setCompleting(false);
 		}
@@ -150,16 +145,6 @@ export default function Verify() {
 						</form>
 					)}
 
-					{message && (
-						<p role="status" className="mt-5 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-800">
-							{message}
-						</p>
-					)}
-					{error && (
-						<p role="alert" className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
-							{error}
-						</p>
-					)}
 				</div>
 			</section>
 		</>

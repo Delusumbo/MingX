@@ -13,15 +13,10 @@ export default defineConfig({
 				rewrite: (path) => path.replace(/^\/api/, "/backend/public/api"),
 			},
 			"/mingxlive-api": {
-				target: "https://mingxlive.com",
-				changeOrigin: true,
-				rewrite: (path) => path.replace(/^\/mingxlive-api/, "/backend/public/api"),
-			},
-			"/api": {
 				target: "https://app.mingxdating.com",
 				changeOrigin: true,
-				rewrite: (path) => path.replace(/^\/api/, "/backend/public/api"),
-			},
+				rewrite: (path) => path.replace(/^\/mingxlive-api/, "/backend/public/api"),
+			}
 		},
 	},
 });

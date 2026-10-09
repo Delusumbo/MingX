@@ -1,8 +1,5 @@
 import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
-
-const API_URL = import.meta.env.DEV
-	? "/api/"
-	: "https://app.mingxdating.com/backend/public/api/";
+import { API_URL } from "./apiConfig";
 
 export async function createSubscription(cardNonce: string): Promise<unknown> {
 	const token = localStorage.getItem("token");

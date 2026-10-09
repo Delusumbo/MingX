@@ -19,8 +19,8 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 	const [error, setError] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
 
-	const appId = "sandbox-sq0idb-GFfOcndZWTu3-xV6cVopUQ";
-	const locationId = "L130YCW3KZGY7";
+	const appId = "sq0idp-EkmrN3K0h9o4Ec7PUXfo3A";
+	const locationId = "HXTG44F7ZCHPY";
 
 	useEffect(() => {
 		let mounted = true;

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { MessageCircle, Plus } from "lucide-react";
 import { Header } from "../../components/Layout";
+import PersonProfileLink from "../../components/PersonProfileLink";
+import { useToast } from "../../components/ToastProvider";
 import { Icon } from "@iconify/react";
 
 import {
@@ -27,6 +29,7 @@ type ChatFilter = "all" | "unread";
 
 export default function Matches() {
 	const myId = getCurrentUserId();
+	const { showToast } = useToast();
 	const [searchParams] = useSearchParams();
 	const location = useLocation();
 	
@@ -46,10 +49,6 @@ export default function Matches() {
 
 	const [messageText, setMessageText] = useState("");
 	const [sending, setSending] = useState(false);
-	const [actionFeedback, setActionFeedback] = useState<{
-		message: string;
-		error: boolean;
-	} | null>(null);
 
 	const [chatFilter, setChatFilter] = useState<ChatFilter>("all");
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -133,29 +132,30 @@ export default function Matches() {
 			} catch (error) {
 				console.error("Conversations error:", error);
 				setConversationsError(getApiMessage(error));
+				showToast(getApiMessage(error), "error");
 			} finally {
 				setLoadingConversations(false);
 			}
 		};
 
 		load();
-	}, []);
+	}, [showToast]);
 
 	useEffect(() => {
-		const receiverIdParam = searchParams.get("receiver_id");
-		if (!receiverIdParam || loadingConversations) return;
+		const personState = location.state?.person as
+			| { id?: number | string; name?: string; image?: string }
+			| undefined;
+		const receiverIdParam = personState?.id ?? searchParams.get("receiver_id");
+		if (receiverIdParam === null || receiverIdParam === undefined || loadingConversations) return;
 
 		const receiverId = Number(receiverIdParam);
+		if (!Number.isInteger(receiverId)) return;
 		const existing = conversations.find((c) => getOtherUser(c, myId).id === receiverId);
 
 		if (existing) {
 			setSelectedConversationId(existing.id);
 			setPendingReceiver(null);
 		} else {
-			const personState = location.state?.person as
-				| { id: number; name: string; image?: string }
-				| undefined;
-
 			setSelectedConversationId(null);
 			setPendingReceiver({
 				id: receiverId,
@@ -182,15 +182,13 @@ export default function Matches() {
 
 		try {
 			setSending(true);
-			setActionFeedback(null);
 
 			const response = await sendMessage({
 				receiverId: selectedOtherUser.id,
 				messageText: text,
 				file,
 			});
-			const message = getApiMessage(response, "Request completed.");
-			if (message) setActionFeedback({ message, error: false });
+			showToast(getApiMessage(response, "Message sent."));
 
 			setMessageText("");
 
@@ -211,7 +209,7 @@ export default function Matches() {
 			}
 		} catch (error) {
 			console.error("Send error:", error);
-			setActionFeedback({ message: getApiMessage(error), error: true });
+			showToast(getApiMessage(error), "error");
 		} finally {
 			setSending(false);
 		}
@@ -224,20 +222,19 @@ export default function Matches() {
 		const load = async () => {
 			try {
 				setLoadingThread(true);
-				setActionFeedback(null);
 
 				const data = await getMessages(selectedConversationId);
 				setThreadMessages(data);
 			} catch (error) {
 				console.error("Messages error:", error);
-				setActionFeedback({ message: getApiMessage(error), error: true });
+				showToast(getApiMessage(error), "error");
 			} finally {
 				setLoadingThread(false);
 			}
 		};
 
 		load();
-	}, [selectedConversationId]);
+	}, [selectedConversationId, showToast]);
 	
 	const filteredConversations = conversations.filter((conversation) => {
 		if (chatFilter === "unread") {
@@ -346,18 +343,23 @@ export default function Matches() {
 						const otherUser = getOtherUser(conversation, myId);
 
 						return (
-							<button
+							<div
 								key={conversation.id}
-								onClick={() => setSelectedConversationId(conversation.id)}
 								className="min-w-19 text-center">
-								<img
-									src={otherUser.profilepicture ?? ""}
-									alt={otherUser.name}
-									className="mx-auto h-19 w-19 rounded-full border-2 border-[#ca2e6b] object-cover p-1"
-								/>
-
-								<span className="mt-2 block text-sm">{otherUser.name}</span>
-							</button>
+								<button
+									type="button"
+									onClick={() => setSelectedConversationId(conversation.id)}
+									aria-label={`Open conversation with ${otherUser.name}`}>
+									<img
+										src={otherUser.profilepicture ?? ""}
+										alt=""
+										className="mx-auto h-19 w-19 rounded-full border-2 border-[#ca2e6b] object-cover p-1"
+									/>
+								</button>
+								<span className="mt-2 block text-sm">
+									{otherUser.name}
+								</span>
+							</div>
 						);
 					})}
 				</div>
@@ -424,33 +426,39 @@ export default function Matches() {
 								const otherUser = getOtherUser(conversation, myId);
 
 								return (
-									<button
+									<div
 										key={conversation.id}
-										onClick={() => setSelectedConversationId(conversation.id)}
 										className={`flex w-full items-center gap-3 border-b border-gray-100 py-3 text-left last:border-0 ${
 											selectedConversationId === conversation.id ? "bg-[#fff5f8]" : ""
 										}`}>
 										{/* Profile */}
-										<div className="relative shrink-0">
+										<button
+											type="button"
+											onClick={() => setSelectedConversationId(conversation.id)}
+											aria-label={`Open conversation with ${otherUser.name}`}
+											className="relative shrink-0">
 											<img
 												src={otherUser.profilepicture ?? ""}
-												alt={otherUser.name}
+												alt=""
 												className="h-9 w-9 rounded-full border border-[#ca2e6b] object-cover"
 											/>
-										</div>
+										</button>
 
 										{/* Name + message */}
 										<span className="flex-1">
-											<b className="block text-sm">{otherUser.name}</b>
-
-											<small
-												className={
+											<b className="block text-sm">
+												{otherUser.name}
+											</b>
+											<button
+												type="button"
+												onClick={() => setSelectedConversationId(conversation.id)}
+												className={`text-left text-xs ${
 													conversation.unread_messages_count > 0
 														? "font-medium text-gray-700"
 														: "text-gray-500"
-												}>
+												}`}>
 												Tap to view messages
-											</small>
+											</button>
 										</span>
 
 										{/* Unread */}
@@ -459,7 +467,7 @@ export default function Matches() {
 												{conversation.unread_messages_count}
 											</b>
 										)}
-									</button>
+									</div>
 								);
 							})}
 					</div>
@@ -491,7 +499,12 @@ export default function Matches() {
 												{selectedOtherUser.name}
 											</h3>
 
-											<p className="text-xs text-gray-400">Tap to view profile</p>
+											<PersonProfileLink
+												personId={selectedOtherUser.id}
+												personName={selectedOtherUser.name}
+												className="text-xs text-gray-400 hover:text-[#ca2e6b] hover:underline">
+												Tap to view profile
+											</PersonProfileLink>
 										</div>
 									</div>
 
@@ -566,18 +579,6 @@ export default function Matches() {
 										</div>
 									</div>
 								</div>
-
-								{actionFeedback && (
-									<p
-										role={actionFeedback.error ? "alert" : "status"}
-										className={`mx-5 mt-3 rounded-lg px-3 py-2 text-sm ${
-											actionFeedback.error
-												? "bg-red-50 text-red-600"
-												: "bg-green-50 text-green-700"
-										}`}>
-										{actionFeedback.message}
-									</p>
-								)}
 
 								{/* Messages */}
 								{/* Messages */}
@@ -688,6 +689,7 @@ export default function Matches() {
 														await handleSendMessage({ file });
 													} catch (error) {
 														console.error("Voice conversion error:", error);
+														showToast(getApiMessage(error), "error");
 													} finally {
 														URL.revokeObjectURL(voiceUrl);
 														setVoiceUrl(null);
@@ -771,7 +773,9 @@ export default function Matches() {
 									/>
 								</div>
 
-								<h2 className="text-xl font-semibold">{selectedOtherUser.name}</h2>
+								<h2 className="text-xl font-semibold">
+									{selectedOtherUser.name}
+								</h2>
 
 								<p className="mt-1 text-sm text-white/60">Video call</p>
 							</div>

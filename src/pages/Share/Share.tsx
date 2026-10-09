@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type DragE
 import { Icon } from "@iconify/react";
 import { ArrowLeft, FileText, Heart, ImagePlus, MessageCircle, Send, Trash2, X } from "lucide-react";
 import Header from "../../components/Header";
+import PersonProfileLink from "../../components/PersonProfileLink";
 import {
 	addComment,
 	addPost,
@@ -16,6 +17,7 @@ import { getApiMessage } from "../../utils/apiMessages";
 
 type PostComment = {
 	id: string | number;
+	authorId: string | number | null;
 	author: string;
 	initials: string;
 	content: string;
@@ -24,6 +26,7 @@ type PostComment = {
 
 type Post = {
 	id: string | number;
+	authorId: string | number | null;
 	author: string;
 	initials: string;
 	content: string;
@@ -68,6 +71,10 @@ function firstValue(record: Record<string, unknown>, ...keys: string[]): unknown
 
 function textValue(value: unknown, fallback = ""): string {
 	return typeof value === "string" || typeof value === "number" ? String(value) : fallback;
+}
+
+function personIdValue(value: unknown): string | number | null {
+	return typeof value === "string" || typeof value === "number" ? value : null;
 }
 
 function booleanValue(value: unknown): boolean {
@@ -118,11 +125,15 @@ function normalizeComment(value: unknown, fallbackId: string | number): PostComm
 	const author =
 		textValue(firstValue(record, "author_name", "name", "author")) ||
 		textValue(firstValue(authorRecord ?? {}, "name", "username"), "Member");
+	const authorId = personIdValue(
+		firstValue(record, "user_id", "author_id") ?? firstValue(authorRecord ?? {}, "id", "user_id"),
+	);
 	const childComments = firstValue(record, "replies", "children", "comments");
 	const commentId = firstValue(record, "id", "comment_id");
 
 	return {
 		id: typeof commentId === "string" || typeof commentId === "number" ? commentId : fallbackId,
+		authorId,
 		author,
 		initials: initials(author),
 		content: textValue(firstValue(record, "content", "comment")),
@@ -180,6 +191,7 @@ function normalizePost(value: unknown, previousPost?: Post): Post {
 		textValue(firstValue(authorRecord ?? {}, "name", "username"), "Member");
 	const ownerId =
 		firstValue(record, "user_id", "author_id") ?? firstValue(authorRecord ?? {}, "id");
+	const authorId = personIdValue(ownerId);
 	const currentUserId = getCurrentUserId();
 	const rawLikes = firstValue(record, "likes_count", "like_count", "likes");
 	const likeStatus = firstValue(record, "liked_by_user", "is_liked", "liked");
@@ -237,6 +249,7 @@ function normalizePost(value: unknown, previousPost?: Post): Post {
 
 	return {
 		id,
+		authorId,
 		author,
 		initials: initials(author),
 		content: textValue(firstValue(record, "content", "post")),
@@ -571,7 +584,18 @@ export default function Share() {
 						{comment.initials}
 					</div>
 					<div className="min-w-0 flex-1">
-						<p className="text-sm font-semibold text-gray-900">{comment.author}</p>
+						<p className="text-sm font-semibold text-gray-900">
+							{comment.authorId !== null ? (
+								<PersonProfileLink
+									personId={comment.authorId}
+									personName={comment.author}
+									className="hover:text-[#ca2e6b] hover:underline">
+									{comment.author}
+								</PersonProfileLink>
+							) : (
+								comment.author
+							)}
+						</p>
 						<p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">
 							{comment.content}
 						</p>
@@ -992,7 +1016,18 @@ function PostHeader({
 				{post.initials}
 			</div>
 			<div className="min-w-0 flex-1">
-				<p className="font-semibold text-gray-900">{post.author}</p>
+				<p className="font-semibold text-gray-900">
+					{post.authorId !== null ? (
+						<PersonProfileLink
+							personId={post.authorId}
+							personName={post.author}
+							className="hover:text-[#ca2e6b] hover:underline">
+							{post.author}
+						</PersonProfileLink>
+					) : (
+						post.author
+					)}
+				</p>
 				<p className="mt-0.5 text-xs text-gray-500">{formatPostDate(post.createdAt)}</p>
 			</div>
 			{post.isMine && (

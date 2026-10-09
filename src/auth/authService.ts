@@ -3,14 +3,10 @@ import {
 	getApiMessage,
 	parseApiResponseBody,
 } from "../utils/apiMessages";
-
-const API_URL = "/api/";
-const DELETE_REQUEST_URL = import.meta.env.DEV
-	? "https://mingxlive.com/backend/public/api/delete/request"
-	: "https://mingxlive.com/backend/public/api/delete/request";
+import { API_URL } from "../services/apiConfig";
 
 export async function requestAccountDeletion(email: string): Promise<unknown> {
-	const response = await fetch(DELETE_REQUEST_URL, {
+	const response = await fetch(`${API_URL}delete/request`, {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
