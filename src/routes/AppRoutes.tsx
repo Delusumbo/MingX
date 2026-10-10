@@ -20,6 +20,7 @@ import Communities from "../pages/Communities/Communities";
 import Share from "../pages/Share/Share";
 import Likes from "../pages/Likes/Likes";
 import OTP from "../pages/verificationCode/verificationCode";
+import VerifyEmail from "../pages/verificationCode/VerifyEmail";
 import EditProfile from "../pages/Profile/EditProfile";
 import {
 	ChildPolicyPage,
@@ -34,6 +35,7 @@ const pageTitles: Record<string, string> = {
 	"/login": "Log In to MingX",
 	"/register": "Create Your MingX Account",
 	"/otp": "Verify Your Account | MingX",
+	"/verifyemai": "Email Verified | MingX",
 	"/discover": "Discover People & Communities | MingX",
 	"/connections": "My Connections | MingX",
 	"/matches": "Your Matches | MingX",
@@ -70,6 +72,7 @@ export const AppRoutes = () => {
 			<Route path="/login" element={<Login />} />
 			<Route path="/register" element={<Signup />} />
 			<Route path="/otp" element={<OTP />} />
+			<Route path="/verifyemail" element={<VerifyEmail />} />
 			<Route path="/terms-of-use" element={<TermsOfUsePage />} />
 			<Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 			<Route path="/support" element={<SupportPage />} />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Header } from "../../components/Layout";
+import LivenessCheck from "../../components/LivenessCheck";
 import { useToast } from "../../components/ToastProvider";
 import {
 	completeFaceVerification,
@@ -87,7 +88,7 @@ export default function Verify() {
 
 			<section className="px-5 pb-24 pt-10 md:px-8 lg:px-10">
 				<h1 className="text-3xl font-bold text-[#67307d]">Face Verification</h1>
-				<p className="mt-2 font-medium">Start a verification session, then submit a clear selfie.</p>
+				<p className="mt-2 font-medium">Start a verification session, then complete a quick live camera check.</p>
 
 				<div className="mt-8 max-w-3xl rounded-2xl bg-white p-6 shadow-sm sm:p-8">
 					<div className="flex flex-wrap items-center justify-between gap-4">
@@ -123,18 +124,11 @@ export default function Verify() {
 					{sessionReference && (
 						<form onSubmit={(event) => void handleComplete(event)} className="mt-8 space-y-5">
 							<div className="space-y-2">
-								<label htmlFor="verification-selfie" className="block text-sm font-medium text-gray-900">
-									Choose a selfie
-								</label>
-								<input
-									id="verification-selfie"
-									type="file"
-									accept="image/*"
-									capture="user"
-									required
-									onChange={(event) => setSelfie(event.target.files?.[0] ?? null)}
-									className="block w-full rounded-xl border border-gray-300 p-3 text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-[#f8edf3] file:px-4 file:py-2 file:font-medium file:text-[#67307d]"
-								/>
+								<p className="text-sm font-medium text-gray-900">Confirm you're a real person</p>
+								<p className="text-sm text-gray-600">
+									Follow the prompts on screen. We'll take your selfie automatically once the check passes.
+								</p>
+								<LivenessCheck onVerified={setSelfie} onReset={() => setSelfie(null)} />
 							</div>
 							<button
 								type="submit"

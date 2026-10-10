@@ -242,34 +242,6 @@ const Login = () => {
     ">
 							{loading ? "Logging in..." : "Login"}
 						</button>
-
-						{/* Divider */}
-						<div className="flex items-center gap-3 py-1">
-							<div className="h-px flex-1 bg-black" />
-
-							<span className="text-sm text-gray-600">Or continue with</span>
-
-							<div className="h-px flex-1 bg-black" />
-						</div>
-
-						{/* Google */}
-						<button
-							type="button"
-							className="
-          flex h-10 w-full
-          items-center justify-center
-          gap-3
-          rounded-xl
-          border border-gray-200
-          bg-white
-          font-medium
-          text-gray-900
-          transition
-          hover:bg-gray-50
-        ">
-							<span className="text-lg font-bold text-[#4285F4]">G</span>
-							Continue with Google
-						</button>
 					</form>
 
 					{/* Sign up */}

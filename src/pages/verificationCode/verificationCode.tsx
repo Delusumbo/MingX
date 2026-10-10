@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/Mingx.png";
 import { verifyOtp } from "../../auth/authService";
-import { useAuth } from "../../context/AuthContext"; // adjust to your actual path/file
+import { useAuth } from "../../context/AuthContext";
 import { getApiMessage } from "../../utils/apiMessages";
 import { useToast } from "../../components/ToastProvider";
 
@@ -93,7 +93,7 @@ const OTP = () => {
             setLoading(true);
 
             const data = await verifyOtp(email, code);
-			login(data.user, data.token); // updates context state, not just localStorage			
+            login(data.user, data.token);
             showToast("Email verified successfully.");
             navigate("/discover", { replace: true });
         } catch (error) {
