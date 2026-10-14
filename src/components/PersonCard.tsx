@@ -6,6 +6,7 @@ import PersonProfileLink from "./PersonProfileLink";
 import { likeUser, unlikeUser } from "../services/likeService";
 import type { ApiPerson } from "../services/discoverService";
 import { getApiMessage } from "../utils/apiMessages";
+import { isCurrentUserPremium } from "../utils/subscription";
 
 import type { Person } from "../types";
 
@@ -15,6 +16,7 @@ type PersonCardProps = {
 	isLiked?: boolean;
 	onLiked?: (userId: number, isLiked: boolean) => void;
 	onFeedback?: (message: string, isError: boolean) => void;
+	requirePremiumToMessage?: boolean;
 	profile?: ApiPerson;
 	presenceStatus?: "online" | "offline" | null;
 };
@@ -25,12 +27,16 @@ export default function PersonCard({
 	isLiked = false,
 	onLiked,
 	onFeedback,
+	requirePremiumToMessage = false,
 	profile,
 	presenceStatus,
 }: PersonCardProps) {
 	const [liking, setLiking] = useState(false);
 	const [liked, setLiked] = useState(isLiked);
 	const [feedback, setFeedback] = useState<{ message: string; error: boolean } | null>(null);
+	const canMessage = !requirePremiumToMessage || isCurrentUserPremium();
+	const messagePath = canMessage ? "/message" : "/premium";
+	const messageLabel = canMessage ? "Message" : "Upgrade to message";
 
 	useEffect(() => {
 		setLiked(isLiked);
@@ -155,11 +161,11 @@ export default function PersonCard({
 
 						{/* Message */}
 						<Link
-							to="/message"
+							to={messagePath}
 							state={{ person: { id: person.id, name: person.name, image: person.image } }}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
-							Message
+							{messageLabel}
 						</Link>
 
 						{/* Like */}
@@ -188,11 +194,11 @@ export default function PersonCard({
 							</PersonProfileLink>
 						)}
 						<Link
-							to="/message"
+							to={messagePath}
 							state={{ person: { id: person.id, name: person.name, image: person.image } }}
 							className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ca2e6b] py-3 text-sm font-medium text-[#ca2e6b] transition hover:bg-[#ca2e6b] hover:text-white">
 							<MessageCircle size={17} />
-							Message
+							{messageLabel}
 						</Link>
 
 						<button

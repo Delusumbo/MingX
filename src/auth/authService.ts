@@ -105,6 +105,7 @@ export const verifyOtp = async (email: string, otp: string) => {
 			localStorage.setItem("user", JSON.stringify(data.user));
 		}
 
+		console.log("User logged in successfully:", data.user);
 	return data;
 };
 

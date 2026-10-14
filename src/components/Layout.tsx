@@ -9,6 +9,7 @@ import {
 	Trash2,
 	User,
 	Users,
+	Video,
 	X,
 } from "lucide-react";
 import { Icon } from "@iconify/react";
@@ -66,6 +67,11 @@ const navigation = [
 		name: "Messages",
 		path: "/message",
 		icon: "solar:chat-round-bold",
+	},
+	{
+		name: "Live Streaming",
+		path: "/live-streaming",
+		icon: "solar:videocamera-record-bold",
 	},
 ];
 
@@ -308,6 +314,11 @@ function MobileSidebar() {
 			path: "/communities",
 			icon: <Users size={19} />,
 		},
+		{
+			name: "Live Streaming",
+			path: "/live-streaming",
+			icon: <Video size={19} />,
+		},
 	];
 
 	return (
@@ -402,7 +413,7 @@ function MobileSidebar() {
 function MobileNavigation() {
 	return (
 		<nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white px-2 py-2 shadow-[0_-5px_20px_rgba(0,0,0,.05)] lg:hidden">
-			<div className="grid grid-cols-5">
+			<div className="grid grid-cols-6">
 				{[
 					{
 						name: "Discover",
@@ -423,6 +434,11 @@ function MobileNavigation() {
 						name: "Communities",
 						path: "/communities",
 						icon: Users,
+					},
+					{
+						name: "Live",
+						path: "/live-streaming",
+						icon: Video,
 					},
 					{
 						name: "Profile",

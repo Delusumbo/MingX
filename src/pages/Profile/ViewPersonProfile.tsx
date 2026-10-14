@@ -6,6 +6,7 @@ import { Header } from "../../components/Layout";
 import { getPeople, type ApiPerson } from "../../services/discoverService";
 import { getPersonProfileSlug } from "../../components/PersonProfileLink";
 import { getApiMessage } from "../../utils/apiMessages";
+import { isCurrentUserPremium } from "../../utils/subscription";
 
 function parseList(value: string | null | undefined): string[] {
 	if (!value) return [];
@@ -73,6 +74,8 @@ export default function ViewPersonProfile() {
 			? navigationState.returnTo
 			: "/discover";
 	const previousPageName = getPreviousPageName(returnTo.split(/[?#]/, 1)[0]);
+	const requiresPremiumToMessage = returnTo.split(/[?#]/, 1)[0] === "/discover";
+	const canMessage = !requiresPremiumToMessage || isCurrentUserPremium();
 	const parsedPersonId =
 		typeof navigationState?.personId === "number" ||
 		(typeof navigationState?.personId === "string" &&
@@ -179,7 +182,7 @@ export default function ViewPersonProfile() {
 										{profile.bio || "No introduction provided."}
 									</p>
 									<Link
-										to="/message"
+										to={canMessage ? "/message" : "/premium"}
 										state={{
 											person: {
 												id: profile.id,
@@ -189,7 +192,7 @@ export default function ViewPersonProfile() {
 										}}
 										className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-linear-to-r from-[#ca2e6b] to-[#67307d] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90">
 										<MessageCircle size={17} />
-										Message {profile.name}
+										{canMessage ? `Message ${profile.name}` : "Upgrade to message"}
 									</Link>
 								</div>
 							</div>

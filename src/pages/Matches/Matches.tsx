@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { MessageCircle, Plus } from "lucide-react";
 import { Header } from "../../components/Layout";
@@ -16,6 +16,9 @@ import {
 	type ApiUser,
 } from "../../services/messageService";
 import { getApiMessage } from "../../utils/apiMessages";
+
+// Agora SDK is large; only load it when a call actually starts
+const VideoCall = lazy(() => import("../../components/VideoCall"));
 
 // Derive "the other person" from a conversation given my own id
 function getOtherUser(conversation: ApiConversation, myId: number | null): ApiUser {
@@ -60,8 +63,6 @@ export default function Matches() {
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const audioChunksRef = useRef<Blob[]>([]);
 	const imageInputRef = useRef<HTMLInputElement>(null);
-	const videoRef = useRef<HTMLVideoElement>(null);
-	const videoStreamRef = useRef<MediaStream | null>(null);
 
 	async function blobToWav(blob: Blob, targetSampleRate = 16000): Promise<Blob> {
 		const arrayBuffer = await blob.arrayBuffer();
@@ -293,43 +294,6 @@ export default function Matches() {
 		setIsRecording(false);
 	};
 
-	const startVideoCall = async () => {
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-			});
-
-			videoStreamRef.current = stream;
-			setVideoCallOpen(true);
-
-			setTimeout(() => {
-				if (videoRef.current) {
-					videoRef.current.srcObject = stream;
-				}
-			}, 100);
-		} catch (error) {
-			console.error("Camera error:", error);
-			alert("Please allow camera and microphone access.");
-		}
-	};
-
-	const endVideoCall = () => {
-		if (videoStreamRef.current) {
-			videoStreamRef.current.getTracks().forEach((track) => {
-				track.stop();
-			});
-
-			videoStreamRef.current = null;
-		}
-
-		if (videoRef.current) {
-			videoRef.current.srcObject = null;
-		}
-
-		setVideoCallOpen(false);
-	};
-
 	return (
 		<>
 			<Header searchPlaceholder="Search by name or message" />
@@ -512,7 +476,9 @@ export default function Matches() {
 									<div className="flex items-center gap-4">
 										<button
 											type="button"
-											onClick={startVideoCall}
+											onClick={() => setVideoCallOpen(true)}
+											disabled={myId === null}
+											aria-label={`Video call ${selectedOtherUser.name}`}
 											className="grid h-9 w-14 place-items-center rounded-xl border border-[#ca2e6b] text-[#ca2e6b] transition hover:bg-[#f9e8ef]">
 											<Icon icon="boxicons:video" width="21" height="21" />
 										</button>
@@ -760,66 +726,15 @@ export default function Matches() {
 				</div>
 			</section>
 
-			{videoCallOpen && selectedOtherUser && (
-				<div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-5">
-					<div className="relative h-full max-h-175 w-full max-w-250 overflow-hidden rounded-3xl bg-gray-900">
-						<div className="flex h-full items-center justify-center">
-							<div className="text-center text-white">
-								<div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full">
-									<img
-										src={selectedOtherUser.profilepicture ?? ""}
-										alt={selectedOtherUser.name}
-										className="h-full w-full object-cover"
-									/>
-								</div>
-
-								<h2 className="text-xl font-semibold">
-									{selectedOtherUser.name}
-								</h2>
-
-								<p className="mt-1 text-sm text-white/60">Video call</p>
-							</div>
-						</div>
-
-						<div className="absolute right-5 top-5 h-45 w-32.5 overflow-hidden rounded-2xl border-2 border-white/20 bg-black shadow-xl">
-							<video
-								ref={videoRef}
-								autoPlay
-								muted
-								playsInline
-								className="h-full w-full object-cover"
-							/>
-						</div>
-
-						<div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-4">
-							<button
-								type="button"
-								className="grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
-								<Icon icon="boxicons:microphone" width="22" height="22" />
-							</button>
-
-							<button
-								type="button"
-								className="grid h-12 w-12 place-items-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
-								<Icon icon="boxicons:video" width="22" height="22" />
-							</button>
-
-							<button
-								type="button"
-								onClick={endVideoCall}
-								className="grid h-14 w-14 place-items-center rounded-full bg-red-500 text-white transition hover:bg-red-600">
-								<Icon icon="boxicons:phone-off" width="24" height="24" />
-							</button>
-						</div>
-
-						<button
-							type="button"
-							onClick={endVideoCall}
-							className="absolute left-5 top-5 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white">
-							<Icon icon="boxicons:x" width="22" height="22" />
-						</button>
-					</div>
-				</div>
+			{videoCallOpen && selectedOtherUser && myId !== null && (
+				<Suspense fallback={null}>
+					<VideoCall
+						myId={myId}
+						receiver={selectedOtherUser}
+						onClose={() => setVideoCallOpen(false)}
+						onError={(message) => showToast(message, "error")}
+					/>
+				</Suspense>
 			)}
 		</>
 	);

@@ -277,6 +277,7 @@ export default function Discover() {
 								key={person.id}
 								person={person}
 								showActions={false}
+								requirePremiumToMessage
 								isLiked={likedIds.includes(person.id)}
 								onLiked={handleLiked}
 								profile={person.profile}

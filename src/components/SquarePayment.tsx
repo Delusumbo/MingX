@@ -7,6 +7,28 @@ declare global {
 	}
 }
 
+let squareSdkPromise: Promise<void> | null = null;
+
+function loadSquareSdk(isLocalhost: boolean): Promise<void> {
+	if (window.Square) return Promise.resolve();
+	if (squareSdkPromise) return squareSdkPromise;
+
+	squareSdkPromise = new Promise((resolve, reject) => {
+		const script = document.createElement("script");
+		script.src = isLocalhost
+			? "https://sandbox.web.squarecdn.com/v1/square.js"
+			: "https://web.squarecdn.com/v1/square.js";
+		script.onload = () => resolve();
+		script.onerror = () => {
+			squareSdkPromise = null;
+			reject(new Error("Square payment SDK failed to load."));
+		};
+		document.head.appendChild(script);
+	});
+
+	return squareSdkPromise;
+}
+
 type SquarePaymentProps = {
 	amount?: number;
 	onTokenReceived?: (token: string) => void | Promise<unknown>;
@@ -19,8 +41,13 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 	const [error, setError] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
 
-	const appId = "sq0idp-EkmrN3K0h9o4Ec7PUXfo3A";
-	const locationId = "HXTG44F7ZCHPY";
+	const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+	const appId = isLocalhost
+		? import.meta.env.VITE_SQUARE_SANDBOX_APP_ID
+		: "sq0idp-EkmrN3K0h9o4Ec7PUXfo3A";
+	const locationId = isLocalhost
+		? import.meta.env.VITE_SQUARE_SANDBOX_LOCATION_ID
+		: "HXTG44F7ZCHPY";
 
 	useEffect(() => {
 		let mounted = true;
@@ -31,9 +58,13 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 				setLoading(true);
 				setError("");
 
-				if (!window.Square) {
-					throw new Error("Square payment SDK has not loaded.");
+				if (!appId || !locationId) {
+					throw new Error(
+						"Square Sandbox is selected on localhost. Set VITE_SQUARE_SANDBOX_APP_ID and VITE_SQUARE_SANDBOX_LOCATION_ID in your local environment.",
+					);
 				}
+
+				await loadSquareSdk(isLocalhost);
 
 				const payments = window.Square.payments(appId, locationId);
 
@@ -66,7 +97,7 @@ export default function SquarePayment({ amount = 10, onTokenReceived }: SquarePa
 				cardInstance.destroy().catch(() => {});
 			}
 		};
-	}, []);
+	}, [appId, isLocalhost, locationId]);
 
 	const handlePayment = async () => {
 		if (!card) return;

@@ -1,16 +1,16 @@
 import { ApiRequestError, getApiMessage } from "../utils/apiMessages";
 import { API_URL } from "./apiConfig";
 
-export async function createSubscription(cardNonce: string): Promise<unknown> {
+async function requestSubscription(path: string, body: Record<string, unknown>): Promise<unknown> {
 	const token = localStorage.getItem("token");
-	const response = await fetch(`${API_URL}subscription/create`, {
+	const response = await fetch(`${API_URL}${path}`, {
 		method: "POST",
 		headers: {
 			Accept: "application/json",
 			"Content-Type": "application/json",
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
 		},
-		body: JSON.stringify({ card_nonce: cardNonce, platform: "android" }),
+		body: JSON.stringify(body),
 	});
 
 	const responseText = await response.text();
@@ -33,4 +33,18 @@ export async function createSubscription(cardNonce: string): Promise<unknown> {
 	}
 
 	return data;
+}
+
+export function createSubscription(cardNonce: string): Promise<unknown> {
+	return requestSubscription("subscription/create", {
+		card_nonce: cardNonce,
+		platform: "android",
+	});
+}
+
+export function cancelSubscription(): Promise<unknown> {
+	return requestSubscription("subscriptions/cancel", {
+		platform: "web",
+		immediately: true,
+	});
 }

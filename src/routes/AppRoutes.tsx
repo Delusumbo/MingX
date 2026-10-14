@@ -19,6 +19,7 @@ import Premium from "../pages/Premium/Premium";
 import Communities from "../pages/Communities/Communities";
 import Share from "../pages/Share/Share";
 import Likes from "../pages/Likes/Likes";
+import LiveStreaming from "../pages/LiveStreaming/LiveStreaming";
 import OTP from "../pages/verificationCode/verificationCode";
 import VerifyEmail from "../pages/verificationCode/VerifyEmail";
 import EditProfile from "../pages/Profile/EditProfile";
@@ -49,6 +50,7 @@ const pageTitles: Record<string, string> = {
 	"/swipe": "Discover People | MingX",
 	"/share": "Share MingX",
 	"/like": "Your Likes | MingX",
+	"/live-streaming": "Live Streaming | MingX",
 	"/terms-of-use": "Terms of Use | MingX",
 	"/privacy-policy": "Privacy Policy | MingX",
 	"/support": "Support | MingX",
@@ -94,6 +96,7 @@ export const AppRoutes = () => {
 					<Route path="/swipe" element={<Swipe />} />
 					<Route path="/share" element={<Share />} />
 					<Route path="/like" element={<Likes />} />
+					<Route path="/live-streaming" element={<LiveStreaming />} />
 
 					<Route path="*" element={<Navigate to="/discover" replace />} />
 				</Route>
