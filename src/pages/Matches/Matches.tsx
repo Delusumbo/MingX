@@ -27,8 +27,17 @@ function getOtherUser(conversation: ApiConversation, myId: number | null): ApiUs
 }
 
 type PendingReceiver = { id: number; name: string; profilepicture: string | null };
+type IncomingCall = {
+	message: ApiMessage;
+	conversation: ApiConversation;
+	caller: ApiUser;
+};
 
 type ChatFilter = "all" | "unread";
+
+const CALL_INVITE_MESSAGE = "[[mingx:video-call:v1]]";
+const CALL_INVITE_MAX_AGE_MS = 60_000;
+const MESSAGE_POLL_INTERVAL_MS = 5_000;
 
 export default function Matches() {
 	const myId = getCurrentUserId();
@@ -57,12 +66,23 @@ export default function Matches() {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [isRecording, setIsRecording] = useState(false);	
 	const [videoCallOpen, setVideoCallOpen] = useState(false);
+	const [callRequestSending, setCallRequestSending] = useState(false);
+	const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
 	const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
 	const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
 
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const audioChunksRef = useRef<Blob[]>([]);
 	const imageInputRef = useRef<HTMLInputElement>(null);
+	const processedCallInviteIdsRef = useRef(new Set<number>());
+	const incomingCallTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(
+		() => () => {
+			if (incomingCallTimeoutRef.current) clearTimeout(incomingCallTimeoutRef.current);
+		},
+		[],
+	);
 
 	async function blobToWav(blob: Blob, targetSampleRate = 16000): Promise<Blob> {
 		const arrayBuffer = await blob.arrayBuffer();
@@ -173,6 +193,125 @@ export default function Matches() {
 
 	// ...
 
+	const startVideoCall = async () => {
+		if (!selectedOtherUser || callRequestSending) return;
+
+		try {
+			setCallRequestSending(true);
+			await sendMessage({
+				receiverId: selectedOtherUser.id,
+				messageText: CALL_INVITE_MESSAGE,
+			});
+			setVideoCallOpen(true);
+		} catch (error) {
+			console.error("Call invitation error:", error);
+			showToast(getApiMessage(error, "Unable to send the call invitation."), "error");
+		} finally {
+			setCallRequestSending(false);
+		}
+	};
+
+	// Discover newly created conversations containing a recent call invitation.
+	useEffect(() => {
+		if (myId === null) return;
+
+		let cancelled = false;
+		let timeoutId: ReturnType<typeof setTimeout>;
+
+		const receiveCallInvite = (
+			message: ApiMessage,
+			conversation: ApiConversation,
+			age: number,
+		) => {
+			if (processedCallInviteIdsRef.current.has(message.id)) return;
+
+			processedCallInviteIdsRef.current.add(message.id);
+			setIncomingCall({
+				message,
+				conversation,
+				caller: getOtherUser(conversation, myId),
+			});
+			setSelectedConversationId(conversation.id);
+			setPendingReceiver(null);
+
+			if (incomingCallTimeoutRef.current) {
+				clearTimeout(incomingCallTimeoutRef.current);
+			}
+			incomingCallTimeoutRef.current = setTimeout(() => {
+				setIncomingCall((current) =>
+					current?.message.id === message.id ? null : current,
+				);
+				processedCallInviteIdsRef.current.delete(message.id);
+				incomingCallTimeoutRef.current = null;
+			}, CALL_INVITE_MAX_AGE_MS - Math.max(0, age));
+		};
+
+		const pollForCalls = async () => {
+			try {
+				const data = await getConversations();
+				if (cancelled) return;
+				setConversations(data);
+
+				if (!videoCallOpen) {
+					const now = Date.now();
+					const recentConversations = data.filter((conversation) => {
+						const updatedAt = Date.parse(conversation.updated_at);
+						return (
+							!Number.isFinite(updatedAt) ||
+							now - updatedAt <= CALL_INVITE_MAX_AGE_MS + 30_000
+						);
+					});
+
+					for (const conversation of recentConversations) {
+						const messages = await getMessages(conversation.id);
+						if (cancelled) return;
+
+						const invite = messages
+							.filter(
+								(message) =>
+									message.sender_id !== myId &&
+									!message.file &&
+									message.message_text === CALL_INVITE_MESSAGE &&
+									!processedCallInviteIdsRef.current.has(message.id),
+							)
+							.sort(
+								(a, b) =>
+									Date.parse(b.created_at) - Date.parse(a.created_at),
+							)
+							.find((message) => {
+								const age = now - Date.parse(message.created_at);
+								return age >= -30_000 && age <= CALL_INVITE_MAX_AGE_MS;
+							});
+
+						if (invite) {
+								receiveCallInvite(
+									invite,
+									conversation,
+									now - Date.parse(invite.created_at),
+								);
+							break;
+						}
+					}
+				}
+			} catch (error) {
+				if (!cancelled) {
+					console.error("Incoming call polling error:", error);
+				}
+			} finally {
+				if (!cancelled) {
+					timeoutId = setTimeout(pollForCalls, MESSAGE_POLL_INTERVAL_MS);
+				}
+			}
+		};
+
+		pollForCalls();
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timeoutId);
+		};
+	}, [myId, videoCallOpen]);
+
 	const handleSendMessage = async (options?: { file?: File | null }) => {
 		if (!selectedOtherUser) return;
 
@@ -216,25 +355,43 @@ export default function Matches() {
 		}
 	};
 
-	// Load thread when a conversation is selected
+	// Keep the selected thread current while it is open.
 	useEffect(() => {
 		if (selectedConversationId === null) return;
 
-		const load = async () => {
-			try {
-				setLoadingThread(true);
+		let cancelled = false;
+		let timeoutId: ReturnType<typeof setTimeout>;
+		let firstRequest = true;
 
+		const load = async () => {
+			if (firstRequest) setLoadingThread(true);
+
+			try {
 				const data = await getMessages(selectedConversationId);
+				if (cancelled) return;
+
 				setThreadMessages(data);
+
 			} catch (error) {
-				console.error("Messages error:", error);
-				showToast(getApiMessage(error), "error");
+				if (!cancelled) {
+					console.error("Messages polling error:", error);
+					if (firstRequest) showToast(getApiMessage(error), "error");
+				}
 			} finally {
-				setLoadingThread(false);
+				if (!cancelled && firstRequest) setLoadingThread(false);
+				firstRequest = false;
+				if (!cancelled) {
+					timeoutId = setTimeout(load, MESSAGE_POLL_INTERVAL_MS);
+				}
 			}
 		};
 
 		load();
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timeoutId);
+		};
 	}, [selectedConversationId, showToast]);
 	
 	const filteredConversations = conversations.filter((conversation) => {
@@ -476,10 +633,14 @@ export default function Matches() {
 									<div className="flex items-center gap-4">
 										<button
 											type="button"
-											onClick={() => setVideoCallOpen(true)}
-											disabled={myId === null}
+											onClick={startVideoCall}
+											disabled={
+												myId === null ||
+												callRequestSending
+											}
+											aria-busy={callRequestSending}
 											aria-label={`Video call ${selectedOtherUser.name}`}
-											className="grid h-9 w-14 place-items-center rounded-xl border border-[#ca2e6b] text-[#ca2e6b] transition hover:bg-[#f9e8ef]">
+											className="grid h-9 w-14 place-items-center rounded-xl border border-[#ca2e6b] text-[#ca2e6b] transition hover:bg-[#f9e8ef] disabled:cursor-not-allowed disabled:opacity-50">
 											<Icon icon="boxicons:video" width="21" height="21" />
 										</button>
 
@@ -549,11 +710,47 @@ export default function Matches() {
 								{/* Messages */}
 								{/* Messages */}
 								<div className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
+									{incomingCall &&
+										selectedOtherUser &&
+										selectedConversationId === incomingCall.conversation.id && (
+										<div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#f9e8ef] p-4">
+											<p className="text-sm font-medium text-gray-900">
+												{incomingCall.caller.name} is calling you.
+											</p>
+											<div className="flex gap-2">
+												<button
+													type="button"
+													onClick={() => {
+														setSelectedConversationId(
+															incomingCall.conversation.id,
+														);
+														setPendingReceiver(null);
+														setIncomingCall(null);
+														setVideoCallOpen(true);
+													}}
+													className="rounded-lg bg-[#ca2e6b] px-4 py-2 text-sm font-medium text-white hover:bg-[#b3235b]">
+													Accept
+												</button>
+												<button
+													type="button"
+													onClick={() => setIncomingCall(null)}
+													className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+													Decline
+												</button>
+											</div>
+										</div>
+									)}
+
 									{loadingThread ? (
 										<div className="text-center text-sm text-gray-500">Loading messages...</div>
 									) : (
 										<div className="space-y-7">
-											{threadMessages.map((message) => {
+											{(selectedConversationId === null ? [] : threadMessages)
+												.filter(
+													(message) =>
+														message.message_text !== CALL_INVITE_MESSAGE,
+												)
+												.map((message) => {
 												const isMe = message.sender_id === myId;
 												const isAudio = message.file?.match(/\.(webm|mp3|wav|m4a|ogg)$/i);
 												const isImage = message.file?.match(/\.(png|jpe?g|gif|webp)$/i);
@@ -599,7 +796,7 @@ export default function Matches() {
 														</span>
 													</div>
 												);
-											})}
+												})}
 
 											<div ref={messagesEndRef} />
 										</div>
