@@ -697,7 +697,7 @@ export default function Share() {
 										<PostMedia
 											src={selectedPost.file}
 											isVideo={selectedPost.fileIsVideo}
-											className="mt-5 max-h-120 w-full rounded-xl object-cover"
+											className="mt-5 max-h-120 w-full rounded-xl object-contain bg-gray-100"
 										/>
 									)}
 									<p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-gray-700">
@@ -868,7 +868,7 @@ export default function Share() {
 													<PostMedia
 														src={filePreview}
 														isVideo={isVideoMedia(file)}
-														className="h-36 w-full rounded-xl object-cover sm:h-28 sm:w-36"
+														className="h-36 w-full rounded-xl object-contain sm:h-28 sm:w-36"
 													/>
 												) : (
 													<div className="grid h-28 w-full shrink-0 place-items-center rounded-xl bg-[#f4eaf3] text-[#67307d] sm:w-36">
@@ -967,7 +967,7 @@ export default function Share() {
 											<PostMedia
 												src={post.file}
 												isVideo={post.fileIsVideo}
-												className="mt-5 max-h-120 w-full rounded-xl object-cover"
+												className="mt-5 max-h-120 w-full rounded-xl object-contain bg-gray-100"
 											/>
 										)}
 										<p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-gray-700">
