@@ -14,13 +14,17 @@ import {
 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import NotificationPanel from "./NotificationPanel";
+import IncomingCallListener from "./IncomingCallListener";
 import Logo from "../assets/images/Mingx.png";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutProvider, useLayout } from "./LayoutContext";
 import { useAuth } from "../context/AuthContext";
 import { deleteAccount as deleteAccountRequest } from "../auth/authService";
 import { getApiMessage } from "../utils/apiMessages";
+import { getCurrentUserId } from "../services/messageService";
+import { updateIncomingCallStatus } from "../services/callService";
+import { registerFcmTokenForUser } from "../services/webPushService";
 
 type HeaderProps = {
 	onSearch?: (value: string) => void;
@@ -470,10 +474,52 @@ function MobileNavigation() {
 
 export default function Layout() {
 	const location = useLocation();
+	const navigate = useNavigate();
+	const myId = getCurrentUserId();
+
+	useEffect(() => {
+		if (myId !== null) {
+			void registerFcmTokenForUser(myId, localStorage.getItem("token") || undefined);
+		}
+	}, [myId]);
 
 	return (
 		<LayoutProvider>
 			<div className="min-h-screen bg-[#faf7f8]">
+				{myId !== null && (
+					<IncomingCallListener
+						myId={myId}
+						onAccept={(call) => {
+							const channel =
+								/^video_call_(\d+)_(.+)$/.exec(call.channel_name) ||
+								/^channel_(\d+)_(.+)$/.exec(call.channel_name);
+							const convId = channel ? Number(channel[1]) || 0 : 0;
+
+							void updateIncomingCallStatus(myId, call.call_id, "accepted")
+								.then(() =>
+									navigate("/matches", {
+										state: {
+											acceptVideoCall: {
+												conversationId: convId,
+												callId: call.call_id,
+												channelName: call.channel_name,
+											},
+										},
+									}),
+								)
+								.catch((error) => {
+									console.error("Unable to accept incoming call:", error);
+								});
+						}}
+						onDecline={(call) => {
+							void updateIncomingCallStatus(myId, call.call_id, "declined").catch(
+								(error) => {
+									console.error("Unable to decline incoming call:", error);
+								},
+							);
+						}}
+					/>
+				)}
 				{/* Desktop sidebar */}
 				<Sidebar />
 

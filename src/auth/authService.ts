@@ -142,6 +142,24 @@ export function getToken() {
 	return localStorage.getItem("token");
 }
 
+export function getStoredUser(): { email?: string; name?: string } {
+	const value = localStorage.getItem("user");
+	if (!value) return {};
+
+	try {
+		const user: unknown = JSON.parse(value);
+		if (typeof user !== "object" || user === null) return {};
+
+		const fields = user as Record<string, unknown>;
+		return {
+			email: typeof fields.email === "string" ? fields.email : undefined,
+			name: typeof fields.name === "string" ? fields.name : undefined,
+		};
+	} catch {
+		return {};
+	}
+}
+
 export function isAuthenticated() {
 	return !!getToken();
 }

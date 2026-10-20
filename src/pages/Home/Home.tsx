@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Logo from "../../assets/images/Mingx.png";
 import Heart from "../../assets/images/love.png";
 import AbstractLine from "../../assets/images/Line.png";
@@ -30,7 +30,29 @@ import Google from "../../assets/images/google.png";
 import { IoIosMail } from "react-icons/io";
 
 
+
 const Home = () => {
+	const [showDownloadPopup, setShowDownloadPopup] = useState(false);
+	
+	useEffect(() => {
+	  const dismissed = sessionStorage.getItem("mingx-download-popup-dismissed");
+	
+	  if (dismissed) return;
+	
+	  const timer = window.setTimeout(() => {
+		setShowDownloadPopup(true);
+	  }, 3000); // Show after 3 seconds
+	
+	  return () => window.clearTimeout(timer);
+	}, []);
+	
+	const closeDownloadPopup = () => {
+	  setShowDownloadPopup(false);
+	  sessionStorage.setItem("mingx-download-popup-dismissed", "true");
+	};
+	
+	const playStoreUrl =
+	  "https://play.google.com/store/apps/details?id=com.dating.mingxapp&hl=en";
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [joinEmail, setJoinEmail] = useState("");
@@ -38,6 +60,75 @@ const Home = () => {
 
 	return (
 		<div className="min-h-screen">
+			{showDownloadPopup && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-5 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="download-popup-title"
+    onClick={(event) => {
+      if (event.target === event.currentTarget) {
+        closeDownloadPopup();
+      }
+    }}
+  >
+    <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-7 text-center shadow-2xl sm:p-10">
+      {/* Close button */}
+      <button
+        type="button"
+        onClick={closeDownloadPopup}
+        aria-label="Close popup"
+        className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-2xl text-gray-600 transition hover:bg-gray-200"
+      >
+        &times;
+      </button>
+
+      {/* App icon */}
+      <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#F9E8EE]">
+        <img
+          src={Logo}
+          alt="MingX"
+          className="h-14 w-14 rounded-xl object-contain"
+        />
+      </div>
+
+      <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#C43266]">
+        Take MingX with you
+      </p>
+
+      <h2
+        id="download-popup-title"
+        className="mb-4 text-3xl font-bold leading-tight text-gray-900"
+      >
+        Better connections start in the app
+      </h2>
+
+      <p className="mb-7 text-base leading-7 text-gray-600">
+        Discover people, chat, and build meaningful connections wherever you go.
+        Download MingX on Google Play today.
+      </p>
+
+      <a
+        href={playStoreUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={closeDownloadPopup}
+        className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#C43266] px-5 py-4 font-semibold text-white transition hover:bg-[#A82A55]"
+      >
+        <img src={Google} alt="" className="h-7 w-7 object-contain" />
+        Download on Google Play
+      </a>
+
+      <button
+        type="button"
+        onClick={closeDownloadPopup}
+        className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+      >
+        Maybe later
+      </button>
+    </div>
+  </div>
+)}
 			{message && (
 				<div role="status" className="bg-green-50 px-5 py-3 text-center text-sm text-green-700">
 					{message}
@@ -526,26 +617,20 @@ const Home = () => {
 
 						<ul className="space-y-3">
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="https://www.instagram.com/mingxdating?rpxt=MThwOHNtNWM4MjFqaA==" target="_blank" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Instagram
 								</Link>
-							</li>
+							</li>							
 
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
-									Twitter
-								</Link>
-							</li>
-
-							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+								<Link to="https://www.facebook.com/share/151PuZ4LfPm/" target="_blank" className="text-sm text-gray-600 transition hover:text-[#C43266]">
 									Facebook
 								</Link>
 							</li>
 
 							<li>
-								<Link to="#" className="text-sm text-gray-600 transition hover:text-[#C43266]">
-									LinkedIn
+								<Link to="https://www.tiktok.com/@mingxdating" target="_blank" className="text-sm text-gray-600 transition hover:text-[#C43266]">
+									Tiktok
 								</Link>
 							</li>
 						</ul>

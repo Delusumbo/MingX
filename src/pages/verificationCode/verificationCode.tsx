@@ -5,6 +5,11 @@ import { verifyOtp } from "../../auth/authService";
 import { useAuth } from "../../context/AuthContext";
 import { getApiMessage } from "../../utils/apiMessages";
 import { useToast } from "../../components/ToastProvider";
+import {
+	generateWebFcmToken,
+	saveUserFcmToken,
+	updateWebFcmToken,
+} from "../../services/webPushService";
 
 const OTP = () => {
     const navigate = useNavigate();
@@ -94,7 +99,27 @@ const OTP = () => {
 
             const data = await verifyOtp(email, code);
             login(data.user, data.token);
-            showToast("Email verified successfully.");
+
+            let fcmUpdateFailed = false;
+            try {
+                const fcmToken = await generateWebFcmToken();
+                if (fcmToken) {
+                    await saveUserFcmToken(data.user.id, fcmToken);
+                    await updateWebFcmToken(fcmToken, data.token).catch((err) =>
+                        console.warn("Backend FCM token update notice:", err)
+                    );
+                }
+            } catch (error) {
+                console.error("FCM token registration error:", error);
+                fcmUpdateFailed = true;
+            }
+
+            showToast(
+                fcmUpdateFailed
+                    ? "You are signed in, but push notifications could not be enabled."
+                    : "Email verified successfully.",
+                fcmUpdateFailed ? "error" : "success",
+            );
             navigate("/discover", { replace: true });
         } catch (error) {
             console.error("OTP verification error:", error);

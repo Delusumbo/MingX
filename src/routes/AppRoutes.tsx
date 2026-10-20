@@ -56,6 +56,8 @@ const pageTitles: Record<string, string> = {
 	"/support": "Support | MingX",
 	"/child-policy": "Child Policy | MingX",
 	"/delete-account": "Delete Your Account | MingX",
+	"/video": "Video Call | MingX",
+	"/videocall": "Video Call | MingX",
 };
 
 export const AppRoutes = () => {
@@ -80,6 +82,7 @@ export const AppRoutes = () => {
 			<Route path="/support" element={<SupportPage />} />
 			<Route path="/child-policy" element={<ChildPolicyPage />} />
 			<Route path="/delete-account" element={<DeleteAccountPage />} />
+
 			{/* Protected routes */}
 			<Route element={<ProtectedRoute />}>
 				<Route element={<Layout />}>
